@@ -88,6 +88,17 @@ accepted October 7, 2026.
 
 ## Latest runtime evidence
 
+October 12 Task C game-owned round-content/spawn-data composition passed on
+baseline `c16442f` plus Task C changes. Local default smoke and three-round
+lifecycle probes preserve starter content/positions and cleanup. Custom and
+empty-content ENet pairs each passed two rounds with server-only pre-tree data,
+host/client observation, player-first teardown, local content reset, fresh
+object identities and retained peer; terminal Stop subscription cleanup also
+passed. Run `task_c_20261012_01` records zero processes, removed profiles and no
+runtime errors/leaks. Build passed with zero warnings/errors and all 73 tests
+passed. Canonical APIs, migration and exact evidence are in
+[shell README](../factory/shell/README.md). No new Steam/VM evidence is claimed.
+
 October 12 Task B player/item-independent carry passed local default GAS/vital/
 inventory compatibility and custom/starter two-process ENet acceptance on
 baseline `d7498d3` plus Task B changes. Explicit carry permission/anchor and

@@ -172,10 +172,19 @@ required. Carry's own scoped router defines the task-specific reading set.
 saved game-owned `PackedScene`; its host does not need to inherit
 `NetworkPlayer3D` (or even `Node3D`). It must satisfy the normal `NetworkWorld`
 spawn contract: a direct child named `NetworkObject` with the `NetworkObject`
-script, and a valid scene resource UID. The shell supplies a `spawn_position`
-dictionary, so the host must implement `INetworkSpawnInitializable` to consume
-that data before tree entry. Game-specific movement and presentation stay in
-the game-owned scene.
+script, and a valid scene resource UID. An explicitly composed
+`IPlayerSpawnDataProvider` supplies the initialization dictionary; the host
+implements `INetworkSpawnInitializable` to consume that schema before tree
+entry. Only the explicit starter provider requires `spawn_position`.
+Game-specific movement and presentation stay in the game-owned scene.
+
+Select the game's `IRoundContent` through `RoundContentPath` and its spawn
+provider through required `SpawnDataProviderPath`, relative to the world node.
+Empty content path means players-only with no starter fallback. Invalid
+configured paths fail clearly. The migrated default scene explicitly selects
+starter content/spawn data; custom scenes need not copy its lifecycle. Canonical
+callbacks, reset/Stop semantics, examples and migration are documented in
+[shell/README.md](../factory/shell/README.md).
 
 The server binds runtime object identity and represented `OwnerPeerId`;
 represented ownership does not transfer the host's Godot authority.

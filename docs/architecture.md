@@ -26,6 +26,17 @@ Maaack Game Template is the vendored GDScript application-shell dependency. It s
 
 Maaack facilities are local application/UI tools, not multiplayer authority. The online shell owns accepted lobby readiness and Lobby → Gameplay → Lobby transitions. Return to Lobby clears authoritative round objects, waits for client world-clear acknowledgements, and reopens the lobby with a new readiness revision while retaining the Steam session/peer. New rounds have fresh gameplay state and identities; terminal Leave tears down the session. Joining/rejoining is supported in Lobby; Gameplay hides the lobby and rejects new peers. Progression, win/loss, and results remain future game-owned rules. Maaack's corresponding example helpers are not composed into the networked flow.
 
+OnlineGameplayWorld retains player/world lifecycle and player-first teardown;
+game/starter composition selects optional IRoundContent and required
+IPlayerSpawnDataProvider through explicit relative paths. Content uses the
+existing world for server-only non-player spawns; the provider supplies data,
+not spawning/authority/identity behavior. Local content cleanup follows normal
+world-clear, or terminal Stop while replicated nodes remain for peer closure.
+An empty content path means no objects, never starter fallback. The default
+scene explicitly composes the original switch/cube and player positions through
+starter implementations. Detailed contract/migration is canonical beside the
+code in [shell README](../factory/shell/README.md).
+
 Gameplay code is not coupled to GodotSteam. `ISteamAdapter` and `GodotSteamAdapter` isolate the bridge; raw Godot networking remains usable above that boundary. The current adapter covers lifecycle, local identity, lobbies, overlay/presence operations, and Steam-ID/peer mapping. Dedicated Steam servers and Steam authentication are not implemented APIs; `RuntimeMode.DedicatedServer` remains a valid future gameplay role.
 
 ## Runtime identities and gameplay layers

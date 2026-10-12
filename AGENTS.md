@@ -50,6 +50,7 @@ explicitly routes to. Do not read every architecture document by default.
 | Task                                                   | Read next                                                                                  |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
 | Current maturity, known blockers, recent evidence      | `docs/current-state.md`                                                                    |
+| Shell round lifecycle or gameplay scene composition    | `factory/shell/AGENTS.md`                                                                  |
 | Network objects, player lifecycle, identity, authority | `factory/networking/AGENTS.md`                                                             |
 | Netfox or rollback player work                         | `factory/networking/netfox/AGENTS.md`, then `docs/netfox-integration.md`                   |
 | Gameplay interaction or replicated game state          | `factory/gameplay/AGENTS.md`                                                               |

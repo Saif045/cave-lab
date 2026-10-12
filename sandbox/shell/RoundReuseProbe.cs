@@ -48,6 +48,9 @@ public partial class RoundReuseProbe : Node
                 Require(world.Objects.All(obj => obj.Id.Value > previousMax), "Object IDs were reused.");
                 previousMax = world.Objects.Max(obj => obj.Id.Value);
                 NetworkPlayer3D player = world.Objects.Select(obj => obj.Host).OfType<NetworkPlayer3D>().Single();
+                Require(player.OriginalSpawnPosition == new Vector3(-2, 2, 0), "Starter spawn provider changed position.");
+                Require(world.Objects.Select(obj => obj.Host).OfType<InteractableSwitch>().Single().Position == new Vector3(0, .625f, -1.5f),
+                    "Starter content changed switch position.");
                 // Normal Netfox node registration is deferred; let it finish
                 // before exercising the lifetime of the populated round.
                 await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -59,6 +62,7 @@ public partial class RoundReuseProbe : Node
                 Require(!world.Objects.Select(obj => obj.Host).OfType<InteractableSwitch>().Single().IsOn,
                     "Switch retained round state.");
                 CarryableItem item = world.Objects.Select(obj => obj.Host).OfType<CarryableItem>().Single();
+                Require(item.WorldTransform.Origin == new Vector3(0, .35f, 1.5f), "Starter content changed cube position.");
                 Require(item.StorageState == CarryableItem.WorldState && item.HolderNetworkObjectId == 0,
                     "Cube retained round state.");
                 Require(player.GetNode<PlayerCarrier>("PlayerCarrier").TryPickup(item), "Pickup failed.");
