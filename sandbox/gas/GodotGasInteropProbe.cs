@@ -209,7 +209,10 @@ public partial class GodotGasInteropProbe : Node
         NetworkPlayer3D client = world.Spawn<NetworkPlayer3D>(prefab, new PeerId(2),
             new Godot.Collections.Dictionary { ["spawn_position"] = new Vector3(1, 3, 0) });
         CarryableItem item = world.Spawn<CarryableItem>(itemPrefab, PeerId.Server,
-            new Godot.Collections.Dictionary { ["spawn_transform"] = Transform3D.Identity });
+            new Godot.Collections.Dictionary { ["spawn_transform"] = new Transform3D(Basis.Identity, new Vector3(0, 3, 1)) });
+        InteractableSwitch interactionSwitch = world.Spawn<InteractableSwitch>(
+            GD.Load<PackedScene>("res://factory/gameplay/interaction/interactable_switch.tscn"), PeerId.Server,
+            new Godot.Collections.Dictionary { ["spawn_position"] = new Vector3(0, 3, -1) });
         NetworkGasComponent clientGas = client.GetNode<NetworkGasComponent>("NetworkGasComponent");
         NetworkGasComponent hostGas = host.GetNode<NetworkGasComponent>("NetworkGasComponent");
         PlayerInteractor hostInteractor = host.GetNode<PlayerInteractor>("PlayerInteractor");
@@ -217,10 +220,22 @@ public partial class GodotGasInteropProbe : Node
         PlayerCarrier carrier = client.GetNode<PlayerCarrier>("PlayerCarrier");
         PlayerInventory inventory = client.GetNode<PlayerInventory>("PlayerInventory");
         NetworkObjectId identity = client.GetNetworkObject().Id;
-        Require(carrier.TryPickup(item), "Composed carry pickup failed.");
+        Input.ActionPress("interact");
+        try { hostInteractor._Process(0); }
+        finally { Input.ActionRelease("interact"); }
+        Require(interactionSwitch.IsOn, "Default interact input/nearest switch failed.");
+        Dispatch(clientInteractor, "HandleRequest", new PeerId(2), (NetworkObjectId?)interactionSwitch.GetNode<NetworkObject>("NetworkObject").Id);
+        Require(!interactionSwitch.IsOn, "Healthy default client switch interaction failed.");
+        Dispatch(clientInteractor, "HandleRequest", new PeerId(2), (NetworkObjectId?)item.GetNode<NetworkObject>("NetworkObject").Id);
+        Require(carrier.HasCarriedItem, "Composed interaction carry pickup failed.");
         for (int i = 0; i < 4; i++) Dispatch(clientGas, "HandleActivation", new PeerId(2));
         Require(client.GasIsDowned && item.StorageState == CarryableItem.WorldState && !carrier.HasCarriedItem,
             "Composed Downed/automatic drop failed.");
+        // The server must consult canonical GAS even when the projection is stale.
+        client.GasIsDowned = false;
+        Dispatch(clientInteractor, "HandleRequest", new PeerId(2), (NetworkObjectId?)interactionSwitch.GetNode<NetworkObject>("NetworkObject").Id);
+        Require(!interactionSwitch.IsOn, "Canonical Downed interaction gate failed.");
+        client.GasIsDowned = true;
         Dispatch(clientInteractor, "HandleRequest", new PeerId(2), (NetworkObjectId?)identity);
         Require(client.GasIsDowned, "Self revive was accepted.");
         Dispatch(hostInteractor, "HandleRequest", new PeerId(3), (NetworkObjectId?)identity);
@@ -252,6 +267,8 @@ public partial class GodotGasInteropProbe : Node
             "Stale action request altered incapacitated/equipped state.");
         await ToSignal(GetTree().CreateTimer(10.1), SceneTreeTimer.SignalName.Timeout);
         Require(client.GasIsDead && !client.GasIsDowned, "Server bleedout timer failed.");
+        Dispatch(clientInteractor, "HandleRequest", new PeerId(2), (NetworkObjectId?)interactionSwitch.GetNode<NetworkObject>("NetworkObject").Id);
+        Require(!interactionSwitch.IsOn, "Dead interaction gate failed.");
         Dispatch(hostInteractor, "HandleRequest", PeerId.Server, (NetworkObjectId?)identity);
         Require(client.GasIsDead && client.GasHealth == 0, "Dead revive accepted.");
         await ToSignal(GetTree().CreateTimer(2.1), SceneTreeTimer.SignalName.Timeout);
@@ -276,6 +293,7 @@ public partial class GodotGasInteropProbe : Node
         peer.Close();
         GameLog.Info("gas.interop", "player_composition_probe_passed", fields: new Dictionary<string, string?>
         { ["bidirectional_revive"] = "True", ["self_owner_range_dead_rejections"] = "True",
+          ["default_input_switch"] = "True", ["canonical_downed_dead_interaction_gate"] = "True", ["interaction_pickup"] = "True",
           ["stale_actions_rejected"] = "True", ["auto_drop"] = "True", ["timer_respawn_identity"] = "True",
           ["stored_equipped_cleanup"] = "True" });
     }

@@ -88,7 +88,21 @@ accepted October 7, 2026.
 
 ## Latest runtime evidence
 
-October 7 session-reuse/Netfox acceptance is the newest runtime milestone,
+October 12 player-independent interaction boundary acceptance passed local
+default-player and two-process ENet custom-player checks on baseline `adf1a854`
+plus Task A changes. `PlayerInteractor` now requires explicit actor permission;
+the starter player retains canonical GAS incapacitation gates, while a plain
+`Node3D` fixture needs neither `NetworkPlayer3D` nor `NetworkGasComponent`.
+Host/client owner requests, switch replication, wrong-sender, invalid/missing
+target, range, policy and self-target rejection passed, as did default input,
+pickup and bidirectional revive. Build passed with zero warnings/errors and
+all 73 tests passed. Run `task_a_20261012_06` records zero test processes,
+removed disposable profiles and no runtime errors/leaks. Earlier failed
+fixture/harness attempts remain preserved; see the interaction section of
+[the consumer guide](consuming-gamefactory.md#composing-player-independent-interaction).
+This is local boundary evidence, not new Steam/VM acceptance.
+
+October 7 session-reuse/Netfox acceptance is the newest Steam/Netfox milestone,
 recorded at `2ea7288`. Frozen run `netfox_round_reuse_20261007_050603`
 proved repeated fresh rounds, leave/rejoin, equipped-client disconnect cleanup,
 host continuation and terminal Leave. Focused run

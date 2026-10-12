@@ -85,6 +85,82 @@ this routing check.
 
 ## Custom gameplay player scenes
 
+### Composing player-independent interaction
+
+Interaction owns target request routing and authoritative network validation;
+actor-state permission belongs to the starter/game. A custom interaction actor
+uses a `Node3D` host with the normal direct child named `NetworkObject`, a
+`PlayerInteractor`, and an explicit node implementing `IInteractionPermission`:
+
+```csharp
+bool CanRequestInteraction(NetworkObject actor, PeerId requestingPeerId);
+```
+
+Set the interactor's `PermissionPath` relative to the interactor (for example,
+`../InteractionPermission`). A missing/empty path or wrong-type node reports a
+configuration error and denies interaction; it never defaults to allowing it.
+An actor without vitality composes a policy that explicitly returns true.
+Neither `NetworkPlayer3D` inheritance nor `NetworkGasComponent` is required.
+Policies check actor state only. Use canonical state on the server and a
+side-effect-free local projection for input suppression; target-specific rules
+remain in `IInteractable.CanInteract`.
+
+Set `EnableDefaultInput=false` for game-owned input/selection and call
+`RequestInteraction(NetworkObjectId target)` on the local owner's interactor.
+This sends the same reliable request and preserves server ownership, identity,
+self-target, range, permission, and target validation. It accepts no client
+transform/state. With default input enabled, `interact` selects the nearest
+eligible local target as before. Target resolution prefers the host's
+`IInteractable`, then its first direct implementing child; candidate hosts use
+the `interactable` group and direct `NetworkObject` child. Range is 3D distance
+between actor and target origins, not an aiming/line-of-sight model.
+
+`CanInteract` must be a side-effect-free availability hint locally; the server
+invocation decides acceptance. `Interact` is dispatched after server validation.
+`InteractionContext.ServerPlayerPosition` keeps its public name for compatibility
+but contains local position during candidate selection.
+
+Migration: existing scenes composing `PlayerInteractor` must add/select an
+explicit policy. The upstream default player is already wired to
+`StarterPlayerInteractionPermission` and retains GAS-backed Downed/Dead gates.
+Revive remains starter/reference gameplay. Reusable interactor diagnostics no
+longer special-case revive; correlate generic interaction outcomes with GAS
+revive outcome events. No InputMap action rename is required. Carry, inventory,
+GAS, round content, and their remaining starter dependencies are unchanged.
+
+Run `sandbox/interaction/run_interaction_boundary_probe.ps1 -Label <unique>`
+after building. It imports fixtures, runs the default GAS/player compatibility
+probe, then runs two local ENet processes with a plain `Node3D` actor and no
+factory GAS. It checks host/client owners, replicated switch results, spoofed
+sender, invalid/missing target, authoritative range, server-only policy denial,
+self-target rejection, and invalid policy configuration. The bounded runner
+preserves evidence in `artifacts/interaction_boundary/<Label>/`, restores the
+caller environment, and verifies removal of test processes/disposable profiles.
+No Steam session or VM acceptance is required for this boundary.
+
+Task A acceptance passed October 12, 2026, on baseline `adf1a854` plus this
+task's source changes: `artifacts/interaction_boundary/task_a_20261012_06/`.
+`result.json` records PASS, zero live test processes and removed disposable
+profiles; host/client stdout records each assertion and ordinary switch
+replication. The tested Debug assembly SHA256 is
+`D82DFE6E43B43595D963D23C0343592FA1AB57361395C3D541B0111491C527B7`.
+The default probe passed input/nearest switch, interaction pickup, canonical
+Downed/Dead rejection, bidirectional revive and existing vital/equipment cleanup.
+Build passed with zero warnings/errors; all 73 tests passed (final TRX under
+`artifacts/interaction_boundary/task_a_unit/`). No new engine-independent
+policy algorithm was introduced; Godot policy configuration is exercised by
+the runtime fixture.
+
+Earlier evidence is preserved separately: attempt 01 was blocked at sandbox
+CIM preflight; attempts 02/03 passed gameplay assertions but failed fixture
+exit checks; diagnostic 04 stopped on verbose editor socket output and 05
+identified orphan invalid-policy test nodes. The fixture now explicitly frees
+those nodes, pairs signal subscriptions, uses a frame deadline and tolerates
+process exit racing with Stop-Process while independently verifying cleanup.
+These corrections did not change the production interaction behavior.
+
+### Spawn and lifecycle contract
+
 `OnlineGameplayWorld.PlayerScene` is a downstream composition seam. Set it to a
 saved game-owned `PackedScene`; its host does not need to inherit
 `NetworkPlayer3D` (or even `Node3D`). It must satisfy the normal `NetworkWorld`

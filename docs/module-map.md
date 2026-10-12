@@ -14,7 +14,7 @@ This inventory describes tracked paths and current responsibilities. Directories
 | `factory/networking/world/` | Dynamic object IDs, generated spawn groups, and world spawn/despawn routing. | Implemented |
 | `factory/steam/` | Process-lifetime Steam platform owner plus scene-local session/lobby/peer boundary and GodotSteam adapter bridge. | Implemented listen-server path |
 | `factory/diagnostics/` | Structured process logs, exported-build identity, replication confirmation, and distributed session evidence. | Implemented |
-| `factory/gameplay/interaction/` | Narrow server-authoritative player interaction request/validation contract and replicated sample switch. | Implemented / acceptance-proven |
+| `factory/gameplay/interaction/` | Player-independent request/validation with explicit actor permission, optional default input, and owner request API; starter GAS permission/revive and sample switch remain separate compositions. | Implemented; boundary acceptance recorded in consumer guide |
 | `factory/gameplay/carry/` | Server-owned carryable world item and per-player one-item carrier/drop request boundary. | Implemented / acceptance-proven |
 | `factory/gameplay/inventory/` | Server-owned one-slot store/retrieve and equipment transitions; stable item identity and source-owned GAS capability grants/removal, with death/despawn cleanup. | Implemented / acceptance-proven |
 | `factory/gameplay/gas/` | GodotGAS adapter and authoritative capability/attribute/tag projections; player-vital Downed/revive/Dead/respawn lifecycle and gameplay action gates. Physical reset consumption and dash motion remain in the Netfox player composition. | Implemented / acceptance-proven |

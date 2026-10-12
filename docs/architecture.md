@@ -44,6 +44,29 @@ clients send a target `NetworkObjectId`, while the server resolves it through
 The sample switch's ordinary replicated state intentionally stays outside
 Netfox rollback and is acceptance-proven on the two-account path.
 
+`PlayerInteractor` has no dependency on the default player, GAS, or revive.
+It requires a `Node3D` actor with the normal direct `NetworkObject`, plus an
+explicit `PermissionPath` to a node implementing `IInteractionPermission`.
+The game/starter owns actor permission; the server checks canonical policy
+after sender ownership and before resolving/dispatching the target. A local
+policy projection suppresses input only. Missing/invalid policy configuration
+fails closed rather than becoming unrestricted interaction.
+`RequestInteraction(NetworkObjectId)` lets owner input and selection remain
+game-owned; `EnableDefaultInput` retains the optional `interact`/nearest-target
+convenience. Only target identity crosses the reliable RPC boundary.
+`IInteractable.CanInteract` runs locally as a side-effect-free availability hint
+and decisively on the server. `Interact` runs only after server validation.
+The existing `ServerPlayerPosition` field name is retained, but the field holds
+local actor position in local selection contexts.
+
+The default `network_player_3d.tscn` explicitly composes
+`StarterPlayerInteractionPermission`: canonical GAS Downed/Dead state blocks
+server interaction and replicated vitals suppress local requests.
+`PlayerReviveInteractable` is starter/reference gameplay; reusable interaction
+does not branch on its type or emit revive-specific diagnostic events. Generic
+interaction request/rejection diagnostics and the starter's GAS revive outcome
+diagnostics remain available.
+
 `factory/gameplay/carry/` adds one server-owned carryable item without an
 authority transfer. Interaction still supplies only a target
 `NetworkObjectId`; the server records a holder object ID or computes a world

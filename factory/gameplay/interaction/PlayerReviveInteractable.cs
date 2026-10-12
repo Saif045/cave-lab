@@ -4,7 +4,7 @@ using GameFactory.Networking.Netfox.Player3D;
 
 namespace GameFactory.Gameplay.Interaction;
 
-/// <summary>Instant revive composed on a player; the existing resolver owns requests/range.</summary>
+/// <summary>Starter/reference instant revive; the reusable interactor owns requests/range.</summary>
 public partial class PlayerReviveInteractable : Node, IInteractable
 {
     private NetworkPlayer3D Player => GetParent<NetworkPlayer3D>();
