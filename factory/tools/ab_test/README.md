@@ -42,21 +42,21 @@ at the current checkout path.
 ```powershell
 # No-launch VM control preflight. Requires a verified remote PowerShell marker
 # and an enabled GameFactoryClient scheduled task; it never starts a game.
-.\tools\ab_test\run.ps1 -Mode Health
+.\factory\tools\ab_test\run.ps1 -Mode Health
 
 # New session. Exits only after AB_READY; both games stay open.
-.\tools\ab_test\run.ps1 -Mode Launch -Scenario netfox_player_3d
+.\factory\tools\ab_test\run.ps1 -Mode Launch -Scenario netfox_player_3d
 
 # Evidence only. Defaults to the latest attempt and never launches, rebuilds,
 # or stops either game.
-.\tools\ab_test\run.ps1 -Mode Verify -RunId <RunId> [-Attempt <number>]
+.\factory\tools\ab_test\run.ps1 -Mode Verify -RunId <RunId> [-Attempt <number>]
 
 # Stop a live session and verify cleanup. Safe to repeat when practical.
-.\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
 
 # After Stop and any manual environment repair, create a fresh attempt using
 # the run's captured immutable build identity.
-.\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId>
 ```
 
 `-RecoverVm` is an explicit preflight recovery option. It runs Health first;
@@ -72,7 +72,7 @@ For normal gameplay development, `-RecoverVm` is recommended and
 `-FreshTransport` is useful when a clean Steam starting point is wanted:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Launch -RecoverVm -FreshTransport
+.\factory\tools\ab_test\run.ps1 -Mode Launch -RecoverVm -FreshTransport
 ```
 
 For Steam/native transport investigation, use plain `Launch`/`Retry` unless a

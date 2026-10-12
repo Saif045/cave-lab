@@ -3,13 +3,13 @@
 `factory/tools/validate.ps1` is the common local validation interface for people and agents. It is model-agnostic: Codex, Qwen/Aider, and a normal PowerShell terminal invoke the same commands.
 
 ```powershell
-.\tools\validate.ps1 -Mode List
-.\tools\validate.ps1 -Mode Quick
-.\tools\validate.ps1 -Mode Auto
-.\tools\validate.ps1 -Mode Headless
-.\tools\validate.ps1 -Mode Probe -Probe Gas
-.\tools\validate.ps1 -Mode ExportSmoke
-.\tools\validate.ps1 -Mode Full
+.\factory\tools\validate.ps1 -Mode List
+.\factory\tools\validate.ps1 -Mode Quick
+.\factory\tools\validate.ps1 -Mode Auto
+.\factory\tools\validate.ps1 -Mode Headless
+.\factory\tools\validate.ps1 -Mode Probe -Probe Gas
+.\factory\tools\validate.ps1 -Mode ExportSmoke
+.\factory\tools\validate.ps1 -Mode Full
 ```
 
 Every invoked check reports `PASS`, `FAIL`, or `SKIP`, its command, and a short reason. The summary only describes checks that actually ran. A/B is always skipped by this wrapper because it is an operator-driven lifecycle.
@@ -58,16 +58,16 @@ The older [testing strategy](testing-strategy.md) records detailed historical co
 The wrapper never starts A/B automatically. Use the dedicated universal interface:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Health
+.\factory\tools\ab_test\run.ps1 -Mode Health
 # requires a nonce-bearing remote PowerShell response and an enabled client task;
 # it never launches a game
-.\tools\ab_test\run.ps1 -Mode Launch -Scenario netfox_player_3d
+.\factory\tools\ab_test\run.ps1 -Mode Launch -Scenario netfox_player_3d
 # human plays both participants
-.\tools\ab_test\run.ps1 -Mode Verify -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Verify -RunId <RunId>
 # human/agent interprets visual report plus generic evidence
-.\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
 # after environmental repair, if needed
-.\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId>
 ```
 
 Use `-RecoverVm` for one controlled VM recovery if Health fails, and use

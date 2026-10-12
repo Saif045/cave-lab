@@ -138,8 +138,8 @@ host/client observation, player-first teardown, local content reset, fresh
 object identities and retained peer; terminal Stop subscription cleanup also
 passed. Run `task_c_20261012_01` records zero processes, removed profiles and no
 runtime errors/leaks. Build passed with zero warnings/errors and all 73 tests
-passed. Canonical APIs, migration and exact evidence are in
-[shell README](../shell/README.md). No new Steam/VM evidence is claimed.
+passed. Canonical APIs/migration are in
+[shell README](../shell/README.md); [exact evidence](#task-c-detailed-acceptance-record) is below. No new Steam/VM evidence is claimed.
 
 October 12 Task B player/item-independent carry passed local default GAS/vital/
 inventory compatibility and custom/starter two-process ENet acceptance on
@@ -149,8 +149,8 @@ Both owners picked up/dropped and observed held follow; starter movement/jump,
 capacity, Downed release, inventory/equipment, sender/permission/holder rejection,
 stale item and despawn cleanup passed. Run `task_b_20261012_02` records PASS,
 zero test processes, removed profiles and no runtime errors/leaks. Build passed
-with zero warnings/errors and all 73 tests passed. Canonical contract, migration
-and exact evidence are in [carry README](../gameplay/carry/README.md).
+with zero warnings/errors and all 73 tests passed. Canonical contract/migration
+is in [carry README](../gameplay/carry/README.md); [exact evidence](#task-b-detailed-acceptance-record) is below.
 This is local carry boundary evidence, not new Steam/VM acceptance.
 
 October 12 player-independent interaction boundary acceptance passed local
@@ -163,8 +163,8 @@ target, range, policy and self-target rejection passed, as did default input,
 pickup and bidirectional revive. Build passed with zero warnings/errors and
 all 73 tests passed. Run `task_a_20261012_06` records zero test processes,
 removed disposable profiles and no runtime errors/leaks. Earlier failed
-fixture/harness attempts remain preserved; see the interaction section of
-[the consumer guide](consuming-gamefactory.md#composing-player-independent-interaction).
+fixture/harness attempts remain preserved; see [exact evidence](#task-a-detailed-acceptance-record).
+Canonical usage is in [interaction README](../gameplay/interaction/README.md).
 This is local boundary evidence, not new Steam/VM acceptance.
 
 October 7 session-reuse/Netfox acceptance is the newest Steam/Netfox milestone,
@@ -349,3 +349,82 @@ evidence and investigate it only if it recurs.
 - `4f213f5` — accepted GAS Sprint + Stamina / Netfox boundary.
 - `cb9918f` — accepted predicted GAS Dash / Netfox boundary.
 - `6f65e67` — accepted server-authoritative one-slot inventory state machine.
+
+## Consumer scene-routing provenance
+
+Consumer routing provenance: the downstream `Saif045/mech-survival`
+reproduction exposed that Host honored the configured gameplay scene while
+Join and Invite loaded the factory scene directly. All routes now share
+resolution; the Task D routing probe/evidence above remains the behavioral
+baseline. This documentation pass did not rerun that probe.
+
+## Task A detailed acceptance record
+
+Task A acceptance passed October 12, 2026, on baseline `adf1a854` plus this
+task's source changes: `factory/artifacts/interaction_boundary/task_a_20261012_06/`.
+`result.json` records PASS, zero live test processes and removed disposable
+profiles; host/client stdout records each assertion and ordinary switch
+replication. The tested Debug assembly SHA256 is
+`D82DFE6E43B43595D963D23C0343592FA1AB57361395C3D541B0111491C527B7`.
+The default probe passed input/nearest switch, interaction pickup, canonical
+Downed/Dead rejection, bidirectional revive and existing vital/equipment cleanup.
+Build passed with zero warnings/errors; all 73 tests passed (final TRX under
+`factory/artifacts/interaction_boundary/task_a_unit/`). No new engine-independent
+policy algorithm was introduced; Godot policy configuration is exercised by
+the runtime fixture.
+
+Earlier evidence is preserved separately: attempt 01 was blocked at sandbox
+CIM preflight; attempts 02/03 passed gameplay assertions but failed fixture
+exit checks; diagnostic 04 stopped on verbose editor socket output and 05
+identified orphan invalid-policy test nodes. The fixture now explicitly frees
+those nodes, pairs signal subscriptions, uses a frame deadline and tolerates
+process exit racing with Stop-Process while independently verifying cleanup.
+These corrections did not change the production interaction behavior.
+
+
+## Task B detailed acceptance record
+
+Task B passed on October 12, 2026, baseline `d7498d3` plus the task changes.
+Final local suite: `factory/artifacts/carry_boundary/task_b_20261012_02/`; its result
+records PASS, zero live test processes, removed profiles and no VM use. The
+Debug assembly SHA256 in build.json is
+`8E6615C02009ABDD0480B43ECAD5D7880870DA6E4CC3F22F7AD7B40F8DB767F1`.
+Default GAS/vital/inventory tests and both custom/starter ENet pairs passed,
+including replicated moving-anchor follow, starter movement/jump while held,
+permission/sender/holder rejection, removed-item recovery and world cleanup.
+Build passed with zero warnings/errors; all 73 existing tests passed (final
+TRX in `factory/artifacts/carry_boundary/task_b_unit/`); diff check passed. New
+configuration/capability logic depends on Godot nodes and is covered by runtime
+assertions rather than mirror unit tests. No new engine-independent algorithm
+was introduced.
+
+Candidate suite `task_b_20261012_01` also passed and is preserved. Final review
+corrected the custom fixture to put its shape under StaticBody3D, added the
+collision-topology assertion, then reran the complete suite. This is focused
+local mechanism evidence, not new Steam/VM or visual A/B acceptance.
+
+## Task C detailed acceptance record
+
+October 12, 2026: baseline `c16442f` plus Task C passed
+`factory/artifacts/round_composition/task_c_20261012_01/`. The result records PASS,
+zero owned processes, removed disposable profiles and no VM use. Debug assembly
+SHA256: `033CC068E06FA1504DEA34DB42BF4BF85DCA4AB008AA0195DD9BD39B641F5393`.
+Build passed with zero warnings/errors; all 73 tests passed (TRX under
+`factory/artifacts/round_composition/task_c_unit/`); diff checks passed.
+
+Default smoke passed interaction/pickup, GAS/vitals, all inventory/equipment
+transitions and cleanup. Default round reuse passed three fresh populated rounds
+with unchanged host/switch/cube positions; the existing custom-player lifecycle
+probe passed three rounds with starter host/other-player initialization and
+disconnect/player-first cleanup. Custom host/client pairs observed beacon/crate
+content and both players' position/player-number/loadout data before tree entry;
+two rounds cleared completely with object maxima 4 then 8. Empty-content pairs
+spawned players only, with maxima 2 then 4, despite a content-capable node still
+being present but unselected. Server-only start/data creation, local content reset
+on both peers, invalid configuration, retained peer and terminal Stop cleanup
+passed without runtime errors/leaks. The fixture inspects registry identities
+through reflection, keeping test-only access out of the public lifecycle API.
+
+No new engine-independent algorithm was introduced; NodePath/capability/data
+composition is checked in Godot rather than duplicated in pure unit tests.
+Existing Steam/VM acceptance remains prior evidence and was not rerun.

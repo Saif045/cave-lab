@@ -4,6 +4,8 @@ This inventory describes tracked paths and current responsibilities. Directories
 
 See [ownership](ownership.md) for placement and [migration notes](v0.2-ownership-migration.md)
 for the complete move/namespace map. Reusable mechanisms never depend on starter/game.
+For canonical usage guides use the [mechanism catalog](../README.md); current
+acceptance records live in [current state](current-state.md), not subsystem histories.
 
 ## Mechanisms, starter and dependencies
 
@@ -17,8 +19,8 @@ for the complete move/namespace map. Reusable mechanisms never depend on starter
 | `factory/networking/world/` | Dynamic object IDs, generated spawn groups, and world spawn/despawn routing. | Implemented |
 | `factory/steam/` | Process-lifetime Steam platform owner plus scene-local session/lobby/peer boundary and GodotSteam adapter bridge. | Implemented listen-server path |
 | `factory/diagnostics/` | Structured process logs, exported-build identity, replication confirmation, and distributed session evidence. | Implemented |
-| `factory/gameplay/interaction/` | Player-independent request/validation with explicit actor permission, optional default input, and owner request API; starter GAS permission/revive and sample switch remain separate compositions. | Implemented; boundary acceptance recorded in consumer guide |
-| `factory/gameplay/carry/` | One-item carrier, explicit actor permission/anchor, carry-target capabilities and reusable World/Carried component; starter cube/GAS adapters retain reference semantics. Canonical guide: [README](../gameplay/carry/README.md). | Task B local acceptance-proven; see topic evidence |
+| `factory/gameplay/interaction/` | Player-independent request/validation with explicit actor permission, optional default input, and owner request API; starter GAS permission/revive and sample switch remain separate compositions. Canonical [README](../gameplay/interaction/README.md). | Implemented; boundary acceptance recorded in current-state |
+| `factory/gameplay/carry/` | One-item carrier, explicit actor permission/anchor, carry-target capabilities and reusable World/Carried component; starter cube/GAS adapters retain reference semantics. Canonical guide: [README](../gameplay/carry/README.md). | Task B local acceptance-proven; see current-state evidence |
 | `factory/starter/gameplay/inventory/` | Server-owned one-slot store/retrieve and equipment transitions; stable item identity and source-owned GAS capability grants/removal, with death/despawn cleanup. | Implemented / acceptance-proven |
 | `factory/starter/gameplay/gas/` | Starter-specific GodotGAS adapter and authoritative capability/attribute/tag projections; player-vital Downed/revive/Dead/respawn lifecycle and gameplay action gates. Physical reset consumption and dash motion remain in the Netfox player composition. | Implemented / acceptance-proven |
 | `factory/shell/` | Maaack/lobby/session glue and reusable round/player/world lifecycle with explicit game-owned content and spawn-data composition; starter providers preserve defaults. Canonical [README](../shell/README.md). | Task C local boundary acceptance; prior Steam reuse baseline retained |

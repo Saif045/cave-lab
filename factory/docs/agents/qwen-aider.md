@@ -31,11 +31,14 @@ Guide routing:
 - `factory/networking/AGENTS.md`: identity, authority, network objects, spawn,
   player lifecycle, and replication.
 - `factory/networking/netfox/AGENTS.md`: Netfox rollback player work.
-- `factory/gameplay/AGENTS.md`: interactions and authoritative gameplay state.
-- `factory/starter/gameplay/gas/AGENTS.md`: GodotGAS integration boundary.
+- `factory/gameplay/interaction/AGENTS.md`: interaction requests/targets.
+- `factory/gameplay/carry/AGENTS.md`: reusable holder/item composition.
+- `factory/starter/AGENTS.md`: reference composition and inventory-only work.
+- `factory/starter/gameplay/gas/AGENTS.md`: starter GAS example and game composition pattern.
 - `factory/steam/AGENTS.md`: Steam sessions, lobbies, adapters, and native peer.
 - `factory/tools/ab_test/AGENTS.md`: host/VM runtime tests and evidence handling.
-- `factory/docs/current-state.md`: compact accepted project status, not a history index.
+- `factory/docs/current-state.md`: current maturity and historical acceptance index;
+  load only the relevant section when evidence matters.
 
 In Aider, add the scoped guide read-only and add only the files being changed:
 
@@ -60,9 +63,9 @@ after every attempted edit. Use narrower commands during iteration when the
 task permits them.
 
 Use the universal validation interface before completion. Normally invoke
-`/run powershell -ExecutionPolicy Bypass -File .\tools\validate.ps1 -Mode Auto`;
+`/run powershell -ExecutionPolicy Bypass -File .\factory\tools\validate.ps1 -Mode Auto`;
 add a focused command such as
-`/run powershell -ExecutionPolicy Bypass -File .\tools\validate.ps1 -Mode Probe -Probe Gas`
+`/run powershell -ExecutionPolicy Bypass -File .\factory\tools\validate.ps1 -Mode Probe -Probe Gas`
 when the task calls for it. See [`../testing.md`](../testing.md) for the common
 semantics; do not duplicate its policy here.
 

@@ -20,11 +20,11 @@ specific agent or an open caller session. Install the one-time interactive
 visible host game and its PowerShell log tail automatically:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Health
+.\factory\tools\ab_test\run.ps1 -Mode Health
 # Confirms the configured VM can return a nonce-bearing remote PowerShell marker
 # and has an enabled GameFactoryClient task. This does not launch a game.
 
-.\tools\ab_test\run.ps1 -Mode Launch `
+.\factory\tools\ab_test\run.ps1 -Mode Launch `
     -Scenario netfox_player_3d `
     -RunId carryable_item_YYYYMMDD_HHMMSS
 ```
@@ -40,7 +40,7 @@ For normal gameplay work, request bounded VM recovery and, when a clean Steam
 starting point is useful, fresh transport preparation:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Launch -Scenario netfox_player_3d -RecoverVm -FreshTransport
+.\factory\tools\ab_test\run.ps1 -Mode Launch -Scenario netfox_player_3d -RecoverVm -FreshTransport
 ```
 
 `-RecoverVm` first runs Health. Only an unhealthy VM gets one restart attempt;
@@ -63,8 +63,8 @@ live attempt. Preserve a native-handshake failure, stop it, then create a
 separate immutable-build retry if needed:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
-.\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId> -RecoverVm -FreshTransport
+.\factory\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId> -RecoverVm -FreshTransport
 ```
 
 Replace the run ID with a unique timestamp-like label. The harness exports the
@@ -106,7 +106,7 @@ When play is complete, collect generic evidence without changing the live
 session:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Verify -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Verify -RunId <RunId>
 ```
 
 `Verify` defaults to the latest attempt; use `-Attempt <number>` to inspect an
@@ -118,7 +118,7 @@ with the visual report.
 Stop only when the session is finished or intentionally abandoned:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Stop -RunId <RunId>
 ```
 
 `Stop` preserves logs/evidence, terminates host and VM processes, verifies
@@ -127,7 +127,7 @@ bad environmental attempt, stop it, repair the VM/Steam environment manually,
 then create a fresh isolated attempt with the same captured build:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId>
+.\factory\tools\ab_test\run.ps1 -Mode Retry -RunId <RunId>
 ```
 
 Recovery actions are metadata only and are saved in the attempt/run state as

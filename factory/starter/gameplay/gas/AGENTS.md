@@ -1,16 +1,13 @@
-# Starter GodotGAS scope
+# Starter GAS scope
 
-Read [README.md](README.md) for this starter's interop ownership. Reusable
-mechanisms must not depend on these player/vital/equipment semantics.
+Read [README.md](README.md) for starter ownership and the server/projection
+composition pattern, then affected adapter/bridge/ability resources only.
+Use vendored GodotGAS docs/source for raw addon API questions.
 
-GodotGAS is the vendored GAS-domain implementation for abilities, attributes,
-effects, and gameplay tags. GameFactory continues to own networking, authority,
-replication, identity, and session lifecycle.
-
-Netfox is separate and frozen while the GAS foundation is established. Do not
-modify its code or put GAS state into rollback history without a later,
-explicit cross-system task.
-
-Keep direct GodotGAS GDScript interop inside `GodotGasAdapter`. C# gameplay
-code should use that adapter rather than scattered string-based `Call` or
-`Get` access to addon APIs.
+- NetworkGasComponent is starter-specific; do not attach it to custom actors
+  simply to use GAS. Games author their own semantics/adapters/projections.
+- Canonical GAS stays on server; client mirrors are hints/read-only consumers.
+- Remove effects by their source and preserve unrelated effects during refresh.
+- Keep raw C#↔GDScript calls inside the adapter; pair subscriptions and cleanup.
+- GAS never enters rollback. Read Netfox guidance only for actual physical
+  projection/replay boundary changes; do not modify vendor code incidentally.

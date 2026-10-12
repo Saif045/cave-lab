@@ -1,6 +1,6 @@
 # Consuming GameFactory in a real game
 
-GameFactory v0.1 is a versioned reusable Godot project foundation with a canonical
+GameFactory is a versioned reusable Godot project foundation with a canonical
 upstream Git repository and a defined downstream Git consumption model.
 [ADR 0007](decisions/0007-upstream-downstream-distribution.md) establishes this
 contract. The [module map](module-map.md) describes implemented responsibilities;
@@ -50,7 +50,7 @@ game/
     progression/
     content/
     resources/
-    factory/tests/
+    tests/
 ```
 
 Game assets may follow existing project asset conventions or a game-owned asset
@@ -77,10 +77,8 @@ rather than using its inherited per-menu `game_scene_path` override. An absent, 
 `res://factory/starter/shell/online_gameplay.tscn`; custom compositions select
 their own fallback. Missing both valid targets is a configuration error.
 
-The downstream `Saif045/mech-survival` reproduction exposed that Host honored
-the configured scene while Join and Invite loaded the factory scene directly.
-All routes now share resolution while retaining Host/Join launch intents,
-invite logging and active-session rejection. Command-line connect still uses
+All routes share resolution while retaining Host/Join launch intents,
+invite logging and active-session rejection. Command-line connect uses
 `AppBootstrap` -> `GameShell.JoinLobby()`. A game-owned scene must retain the
 normal shell composition/session ownership and consume the pending intent once.
 
@@ -96,119 +94,26 @@ this routing check.
 
 ### Composing player-independent interaction
 
-Interaction owns target request routing and authoritative network validation;
-actor-state permission belongs to the starter/game. A custom interaction actor
-uses a `Node3D` host with the normal direct child named `NetworkObject`, a
-`PlayerInteractor`, and an explicit node implementing `IInteractionPermission`:
-
-```csharp
-bool CanRequestInteraction(NetworkObject actor, PeerId requestingPeerId);
-```
-
-Set the interactor's `PermissionPath` relative to the interactor (for example,
-`../InteractionPermission`). A missing/empty path or wrong-type node reports a
-configuration error and denies interaction; it never defaults to allowing it.
-An actor without vitality composes a policy that explicitly returns true.
-Neither `NetworkPlayer3D` inheritance nor `NetworkGasComponent` is required.
-Policies check actor state only. Use canonical state on the server and a
-side-effect-free local projection for input suppression; target-specific rules
-remain in `IInteractable.CanInteract`.
-
-Set `EnableDefaultInput=false` for game-owned input/selection and call
-`RequestInteraction(NetworkObjectId target)` on the local owner's interactor.
-This sends the same reliable request and preserves server ownership, identity,
-self-target, range, permission, and target validation. It accepts no client
-transform/state. With default input enabled, `interact` selects the nearest
-eligible local target as before. Target resolution prefers the host's
-`IInteractable`, then its first direct implementing child; candidate hosts use
-the `interactable` group and direct `NetworkObject` child. Range is 3D distance
-between actor and target origins, not an aiming/line-of-sight model.
-
-`CanInteract` must be a side-effect-free availability hint locally; the server
-invocation decides acceptance. `Interact` is dispatched after server validation.
-`InteractionContext.ServerPlayerPosition` keeps its public name for compatibility
-but contains local position during candidate selection.
-
-Migration: existing scenes composing `PlayerInteractor` must add/select an
-explicit policy. The upstream default player is already wired to
-`StarterPlayerInteractionPermission` and retains GAS-backed Downed/Dead gates.
-Revive remains starter/reference gameplay. Reusable interactor diagnostics no
-longer special-case revive; correlate generic interaction outcomes with GAS
-revive outcome events. No InputMap action rename is required. Task A left carry,
-inventory, GAS and round content unchanged; Task B adds the carry seam below.
-
-Run `factory/sandbox/interaction/run_interaction_boundary_probe.ps1 -Label <unique>`
-after building. It imports fixtures, runs the default GAS/player compatibility
-probe, then runs two local ENet processes with a plain `Node3D` actor and no
-factory GAS. It checks host/client owners, replicated switch results, spoofed
-sender, invalid/missing target, authoritative range, server-only policy denial,
-self-target rejection, and invalid policy configuration. The bounded runner
-preserves evidence in `factory/artifacts/interaction_boundary/<Label>/`, restores the
-caller environment, and verifies removal of test processes/disposable profiles.
-No Steam session or VM acceptance is required for this boundary.
-
-Task A acceptance passed October 12, 2026, on baseline `adf1a854` plus this
-task's source changes: `factory/artifacts/interaction_boundary/task_a_20261012_06/`.
-`result.json` records PASS, zero live test processes and removed disposable
-profiles; host/client stdout records each assertion and ordinary switch
-replication. The tested Debug assembly SHA256 is
-`D82DFE6E43B43595D963D23C0343592FA1AB57361395C3D541B0111491C527B7`.
-The default probe passed input/nearest switch, interaction pickup, canonical
-Downed/Dead rejection, bidirectional revive and existing vital/equipment cleanup.
-Build passed with zero warnings/errors; all 73 tests passed (final TRX under
-`factory/artifacts/interaction_boundary/task_a_unit/`). No new engine-independent
-policy algorithm was introduced; Godot policy configuration is exercised by
-the runtime fixture.
-
-Earlier evidence is preserved separately: attempt 01 was blocked at sandbox
-CIM preflight; attempts 02/03 passed gameplay assertions but failed fixture
-exit checks; diagnostic 04 stopped on verbose editor socket output and 05
-identified orphan invalid-policy test nodes. The fixture now explicitly frees
-those nodes, pairs signal subscriptions, uses a frame deadline and tolerates
-process exit racing with Stop-Process while independently verifying cleanup.
-These corrections did not change the production interaction behavior.
+Compose an explicit game-owned actor policy and the reusable PlayerInteractor.
+Use [interaction README](../gameplay/interaction/README.md) for minimal actor/
+target scenes, custom input, authority and validation. Starter permission and
+revive semantics are optional examples. Current acceptance →
+[current state](current-state.md#task-a-detailed-acceptance-record).
 
 ### Spawn and lifecycle contract
 
-For custom-player and custom-item carry composition, use the canonical
-[carry guide](../gameplay/carry/README.md). It documents explicit
-policy/anchor wiring, capability discovery, server request/lifecycle APIs,
-replication/presentation, starter adapters and migration. Game-owned scenes
-remain under `game/`; no factory path moves or universal inventory API are
-required. Carry's own scoped router defines the task-specific reading set.
+Select a saved game-owned PlayerScene and an explicit game-owned spawn-data
+provider on OnlineGameplayWorld; NetworkPlayer3D inheritance is unnecessary.
+Use [networking](../networking/README.md) for identities, spawn initialization,
+authority and replication, and [shell](../shell/README.md) for content/provider
+callbacks, reset ordering and retained-session lifetime.
 
-`OnlineGameplayWorld.PlayerScene` is a downstream composition seam. Set it to a
-saved game-owned `PackedScene`; its host does not need to inherit
-`NetworkPlayer3D` (or even `Node3D`). It must satisfy the normal `NetworkWorld`
-spawn contract: a direct child named `NetworkObject` with the `NetworkObject`
-script, and a valid scene resource UID. An explicitly composed
-`IPlayerSpawnDataProvider` supplies the initialization dictionary; the host
-implements `INetworkSpawnInitializable` to consume that schema before tree
-entry. Only the explicit starter provider requires `spawn_position`.
-Game-specific movement and presentation stay in the game-owned scene.
-
-Select the game's `IRoundContent` through `RoundContentPath` and its spawn
-provider through required `SpawnDataProviderPath`, relative to the world node.
-Empty content path means players-only with no starter fallback. Invalid
-configured paths fail clearly. The migrated default scene explicitly selects
-starter content/spawn data; custom scenes need not copy its lifecycle. Canonical
-callbacks, reset/Stop semantics, examples and migration are documented in
-[shell/README.md](../shell/README.md).
-
-The server binds runtime object identity and represented `OwnerPeerId`;
-represented ownership does not transfer the host's Godot authority.
-`PlayerLifecycle` tracks `PlayerId`, `PeerId`, and `NetworkObjectId` independently
-of the host class. Round reset waits for registered player objects to leave the
-world before removing remaining round objects, retaining the session and world
-ID allocator. The default `network_player_3d.tscn` sample remains unchanged.
-
-The focused `factory/sandbox/shell/custom_player_lifecycle_probe.tscn` checks this
-contract in Godot using a minimal `Node` host and synthetic registry peers;
-`round_reuse_probe.tscn` covers the default sample's populated round reset. Run
-both with `factory/sandbox/shell/run_custom_player_lifecycle_probe.ps1` after building;
-the runner imports resources, asserts three rounds for each scene, and preserves
-logs and cleanup results under `factory/artifacts/custom_player_lifecycle/<Label>/`.
-These local probes do not establish Steam transport or visual gameplay acceptance.
+Use [carry](../gameplay/carry/README.md) for custom holder/item composition,
+[Netfox](../networking/netfox/README.md) for a custom physical rollback player,
+and [starter GAS pattern](../starter/gameplay/gas/README.md) as an example when
+authoring the game's own canonical GAS and projections. Do not attach starter
+NetworkGasComponent just to use GodotGAS. The [mechanism catalog](../README.md)
+maps the remaining reusable boundaries without requiring the architecture manual.
 
 ## Create a new game
 
@@ -449,7 +354,6 @@ dependency, generic engine-independent multiplayer SDK, production Steam shippin
 guarantee, dedicated-server-complete framework, or promise of conflict-free v0.x
 upgrades. Its project-wide composition is why packaging is deferred.
 
-Real games may later justify `addons/gamefactory/` and a separation into
-GameFactory Runtime, Starter defaults, and tooling. A submodule or other package
-could then fit. This is a possibility requiring consumer evidence, not a promise
-of the final architecture or work to do before the first game.
+v0.2 already separates reusable mechanisms, optional starter defaults and
+development material physically under factory/. A future independently packaged
+addon/submodule needs consumer evidence; it is not part of this ownership pass.

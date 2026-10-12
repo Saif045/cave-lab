@@ -151,8 +151,8 @@ host/VM parity; record manifest, account/PID ownership, loaded DLL path/hash
 and attempt ID. Freeze source/config/build through each attempt.
 
 ```powershell
-.\tools\ab_test\run.ps1 -Mode Health
-.\tools\ab_test\run.ps1 -Mode Launch -Scenario shell_manual -SteamTransportTrace -RunId peer_lifecycle_<timestamp>
+.\factory\tools\ab_test\run.ps1 -Mode Health
+.\factory\tools\ab_test\run.ps1 -Mode Launch -Scenario shell_manual -SteamTransportTrace -RunId peer_lifecycle_<timestamp>
 ```
 
 Fresh suite: five isolated attempts, fresh game processes each time, same

@@ -1,4 +1,4 @@
-# Steam Integration
+# Steam integration and diagnostic notes
 
 ## Status
 
@@ -13,9 +13,9 @@ The October 7 [session reuse acceptance](session-reuse-acceptance.md) covers rep
 - Windows x86_64 binaries include the documented close fix, recovered pending-peer dedupe, and callback lifecycle/connection ownership guards in [`third_party/patches/godotsteam/README.md`](../../third_party/patches/godotsteam/README.md). Repeated session reuse and same-process role reversal are accepted on the tested path. Intermittent BadCert/native Steam behavior remains unresolved; later passing runs do not prove permanent resolution (see [transport history](current-state.md#transport-history)).
 - Development uses Steam App ID 480 only.
 
-`SteamPlatform` is a process-lifetime autoload that owns the `GodotSteamAdapter` and shuts the Steam singleton down only on application exit. Each scene-local `SteamSession` calls that shared `ISteamAdapter`; `GodotSteamAdapter` calls the project GDScript bridge, the only GameFactory code that knows GodotSteam's singleton and `SteamMultiplayerPeer`. A session installs the returned peer into Godot's `MultiplayerApi`. Existing Godot RPC, spawners, synchronizers, `NetworkWorld`, and player lifecycle remain above it and have no GodotSteam dependency.
-
-The flow is explicit: initialize Steam once per application, then for every session host or join a friends-only lobby, create/assign its Steam peer, close and clear that peer from Godot, and leave the lobby. Peer teardown is idempotent: an already-disposed peer is treated as clean state, and a close/dispose error is recorded without preventing lobby leave. Incoming invites are surfaced rather than silently joining an active session. Steam IDs and Godot peer IDs remain distinct.
+Stable platform/session composition and authority/identity contracts are in
+[Steam README](../steam/README.md). These notes retain dependency, execution
+and diagnostic context; routine lobby work does not need the historical records.
 
 ## Manual probes
 

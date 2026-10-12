@@ -1,73 +1,11 @@
-# Netfox Integration
+# Netfox diagnostic probes and integration evidence
 
-## Scope and status
-
-Netfox source commit `38f59778b02bfd1a3dedc7dcc985945d7058858d` (reports 1.49.3)
-is the pinned native GDScript rollback dependency for the
-acceptance-proven Steam-backed two-player movement/player slice. GameFactory
-uses it selectively for responsive deterministic simulation; it does not
-introduce NetfoxSharp, Noray, a parallel reconciliation system, or a
-generic replication migration.
-
-Use Netfox for continuous latency-sensitive deterministic simulation.
-GodotGAS owns canonical abilities/attributes/tags outside rollback history;
-only explicit deterministic projections/inputs bridge into movement simulation.
-Discrete authoritative gameplay uses reliable RPC, server validation, and
-ordinary `ReplicationComponent`/`MultiplayerSynchronizer` replication. Do
-canonical integration before reconciliation instrumentation; `is_fresh ==
-false` means resimulation, not proof of a correction.
-
-The intended ownership boundary is:
-
-```text
-Steam / GodotSteam
-    connection and packet transport
-        -> Godot MultiplayerApi
-            -> Netfox NetworkEvents and NetworkTime
-                -> GameFactory sandbox spawning and interactive movement
-```
-
-`SteamSession` remains the only owner of lobby creation, joining, and the
-`SteamMultiplayerPeer` installed into Godot. `NetworkEvents` is the only owner
-of `NetworkTime.start()` and `NetworkTime.stop()`; the sandbox does not call
-either method itself. Existing `MultiplayerSynchronizer` replication remains
-unchanged.
-
-## Pinned dependency
-
-| Field | Value |
-|---|---|
-| Dependency | `foxssake/netfox` |
-| Version | Reports 1.49.3; upstream upgrade notes still say Unreleased |
-| Source commit | `38f59778b02bfd1a3dedc7dcc985945d7058858d` |
-| Vendored paths | `addons/netfox/`, `addons/netfox.internals/` |
-| Excluded | `netfox.noray`, NetfoxSharp, Netfox extras |
-
-Both upstream plugins remain enabled. Their twelve autoloads include the five
-original time/rollback/event/performance nodes plus RollbackSimulationServer,
-NetworkHistoryServer, NetworkSynchronizationServer, NetworkIdentityServer,
-NetworkCommandServer, RollbackLivenessServer and InterpolationServer. Explicit
-settings preserve history64, input broadcastfalse and full-state interval24.
-
-The old per-player `_submit_input` receiver and local history-accessor fix are
-retired. Input commands now enter persistent NetworkCommandServer; snapshot
-serialization consumes the payload before resolving identity and skips unknown
-subjects safely. NetworkIdentityServer IDs and NetworkObject paths must remain
-monotonic during a live peer; never call identity `clear()` during round reuse.
-
-The existing NetworkEvents listen-server role-pairing correction and its
-opt-in NFTRACE remain. NetworkEvents alone owns NetworkTime start/stop. Other
-old vendor trace hooks were retired with the coherent upstream replacement.
-Use `factory/tools/ab_test/run.ps1 -NetfoxLifecycleTrace` for lifecycle evidence;
-ordinary upstream identity logs provide ID/path samples. The source delta and
-held-unreliable-input regression are in [the compatibility report](netfox-compatibility-spike.md).
-Steam gameplay, round/session reuse, guard rejection and same-process role
-reversal acceptance are in [session reuse acceptance](session-reuse-acceptance.md).
-
-On a fresh import Godot may need one clean editor restart after the plugins
-first add their interdependent autoloads. The first activation can compile
-scripts before all autoload names exist; the next editor startup must be clean
-before treating the addon as enabled.
+Canonical custom-player topology, authority, history and clock-lifetime contracts
+live in [Netfox README](../networking/netfox/README.md). Use this document only
+for these probe/instrumentation details; current acceptance is indexed in
+[current state](current-state.md). Pinned upgrade provenance and fresh-import
+observations live in [compatibility notes](netfox-compatibility-spike.md) and
+[ownership migration](v0.2-ownership-migration.md#fresh-cache-validation-observation).
 
 ## Phase-1 probe and evidence
 
@@ -127,21 +65,8 @@ input, simulation, and presentation behavior.
 
 ## Reusable 3D rollback-player slice
 
-`factory/starter/player/network_player_3d.tscn` is the first
-production-facing `CharacterBody3D` composition. Its state list explicitly
-tracks `:position`, `:velocity`, and `Simulation:grounded`; its input list
-explicitly tracks `Input:movement` and `Input:jump_pressed`. Simulation runs
-only from `_rollback_tick`, and applies `NetworkTime.physics_factor` only
-around `move_and_slide()`, as required by Netfox's CharacterBody integration.
-`Presentation` remains outside rollback state and is the interpolation target.
-
-The input node deliberately uses the core `before_tick_loop` pattern,
-rather than adding `netfox.extras` solely for `BaseNetInput`. Extras is not
-otherwise needed or vendored, and keeping the two inputs in the prefab makes
-the rollback contract inspectable. Movement is sampled each tick; a physical
-jump press is queued in `_process()` and exposed as exactly one recorded
-`jump_pressed` input tick. Re-evaluate that dependency only when a future
-player needs its broader standardized input features.
+The reference composition is documented in [starter player](../starter/player/README.md);
+its reusable contract is [Netfox README](../networking/netfox/README.md).
 
 `factory/sandbox/netfox/netfox_player_3d_probe.tscn` is selected with
 `--run=netfox-player-3d`. It spawns the prefab through `NetworkWorld` and
@@ -151,16 +76,8 @@ also emits the standard `steam.peer_status` initial, changed, and periodic
 records so the shared A/B harness can establish native transport readiness
 before its Godot and gameplay checkpoints.
 
-The same probe includes one ordinary server-authoritative interaction target.
-`E` is a local, edge-triggered request handled by
-`factory/gameplay/interaction/PlayerInteractor.cs`: the server resolves the
-requested `NetworkObjectId` via `NetworkWorld`, checks RPC sender ownership,
-target type, and server-side range, then invokes the target's narrow
-`IInteractable` contract. The sample switch uses the factory
-`ReplicationComponent` to replicate only `IsOn`; it is not in Netfox rollback
-history and has no prediction. The capsule material is presentation-only and
-derived deterministically from `OwnerPeerId`, so players are visibly distinct
-without replicated color state.
+The probe also exercises the [interaction contract](../gameplay/interaction/README.md)
+and local owner-color presentation in the starter.
 
 This is a manual playground, not the former deterministic divergence/convergence
 acceptance scenario. Its small `netfox.movement` logs report player spawn and
@@ -210,8 +127,8 @@ while making visual convergence observable.
 Use repeated sampling only after a baseline attempt succeeds:
 
 ```powershell
-.\tools\ab_test\run.ps1 -Scenario steam_basic
-.\tools\ab_test\run_suite.ps1 -Scenario netfox_time_sync -Attempts 3
+.\factory\tools\ab_test\run.ps1 -Scenario steam_basic
+.\factory\tools\ab_test\run_suite.ps1 -Scenario netfox_time_sync -Attempts 3
 ```
 
 Each process scenario follows `factory/docs/testing-protocol.md`; the suite preserves
@@ -227,17 +144,8 @@ movement evidence.
 
 ## Player vital respawn boundary
 
-Player Vital Lifecycle uses ordinary server-owned `RespawnRevision` and
-`RespawnTick`, with the original spawn position retained from spawn data.
-`_rollback_tick` consumes a newer revision at/after its server tick and resets
-position, velocity, grounded, dash duration/direction, and consumed dash
-permission. That tick ignores stale action inputs. Only
-`Simulation:last_respawn_revision` is added to physical rollback state; GAS
-health/tags and lifecycle revision/tick remain ordinary projection. Restoring
-an older snapshot restores older consumption, causing the reset to replay at
-the boundary instead of losing the teleport. Later snapshots retain consumption
-and permit normal motion. No vendor history clearing, `process_settings()`
-reset, or arbitrary `_Process()` teleport is used.
+The stable reset/replay contract is documented in
+[starter GAS](../starter/gameplay/gas/README.md#gas-and-netfox).
 
 The headless `factory/sandbox/netfox/player_vital_motion_probe.tscn` loads the prefab's
 actual `RollbackSynchronizer.state_properties` list into `_PropertyPool`, then

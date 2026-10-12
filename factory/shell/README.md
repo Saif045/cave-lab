@@ -224,31 +224,7 @@ Non-goals: level/game-mode/objective/encounter frameworks, content database,
 generic loader/DI/event bus, new spawn registry, transport/session protocol,
 movement/rollback changes, gameplay subsystem redesign or physical relocation.
 
-## Accepted Task C evidence
-
-October 12, 2026: baseline `c16442f` plus Task C passed
-`factory/artifacts/round_composition/task_c_20261012_01/`. The result records PASS,
-zero owned processes, removed disposable profiles and no VM use. Debug assembly
-SHA256: `033CC068E06FA1504DEA34DB42BF4BF85DCA4AB008AA0195DD9BD39B641F5393`.
-Build passed with zero warnings/errors; all 73 tests passed (TRX under
-`factory/artifacts/round_composition/task_c_unit/`); diff checks passed.
-
-Default smoke passed interaction/pickup, GAS/vitals, all inventory/equipment
-transitions and cleanup. Default round reuse passed three fresh populated rounds
-with unchanged host/switch/cube positions; the existing custom-player lifecycle
-probe passed three rounds with starter host/other-player initialization and
-disconnect/player-first cleanup. Custom host/client pairs observed beacon/crate
-content and both players' position/player-number/loadout data before tree entry;
-two rounds cleared completely with object maxima 4 then 8. Empty-content pairs
-spawned players only, with maxima 2 then 4, despite a content-capable node still
-being present but unselected. Server-only start/data creation, local content reset
-on both peers, invalid configuration, retained peer and terminal Stop cleanup
-passed without runtime errors/leaks. The fixture inspects registry identities
-through reflection, keeping test-only access out of the public lifecycle API.
-
-No new engine-independent algorithm was introduced; NodePath/capability/data
-composition is checked in Godot rather than duplicated in pure unit tests.
-Existing Steam/VM acceptance remains prior evidence and was not rerun.
+Current acceptance/evidence → [current state](../docs/current-state.md#task-c-detailed-acceptance-record).
 
 ## Application gameplay fallback composition
 

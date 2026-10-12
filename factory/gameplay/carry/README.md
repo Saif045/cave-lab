@@ -205,23 +205,4 @@ Non-goals: inventory/equipment sockets, install/replace rules, mass/hands,
 containers, item database, generic actions/events, transport abstraction, scene
 framework, arbitrary rigid-body pickup physics or physical directory relocation.
 
-## Accepted evidence
-
-Task B passed on October 12, 2026, baseline `d7498d3` plus the task changes.
-Final local suite: `factory/artifacts/carry_boundary/task_b_20261012_02/`; its result
-records PASS, zero live test processes, removed profiles and no VM use. The
-Debug assembly SHA256 in build.json is
-`8E6615C02009ABDD0480B43ECAD5D7880870DA6E4CC3F22F7AD7B40F8DB767F1`.
-Default GAS/vital/inventory tests and both custom/starter ENet pairs passed,
-including replicated moving-anchor follow, starter movement/jump while held,
-permission/sender/holder rejection, removed-item recovery and world cleanup.
-Build passed with zero warnings/errors; all 73 existing tests passed (final
-TRX in `factory/artifacts/carry_boundary/task_b_unit/`); diff check passed. New
-configuration/capability logic depends on Godot nodes and is covered by runtime
-assertions rather than mirror unit tests. No new engine-independent algorithm
-was introduced.
-
-Candidate suite `task_b_20261012_01` also passed and is preserved. Final review
-corrected the custom fixture to put its shape under StaticBody3D, added the
-collision-topology assertion, then reran the complete suite. This is focused
-local mechanism evidence, not new Steam/VM or visual A/B acceptance.
+Current acceptance/evidence → [current state](../../docs/current-state.md#task-b-detailed-acceptance-record).
