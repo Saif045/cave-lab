@@ -21,5 +21,5 @@ work, also read `netfox/AGENTS.md`; for Steam transport, route to
   boundary.
 
 Before altering identity, authority, spawn/despawn, or replication composition,
-read `docs/architecture.md` and the relevant module entry in
-`docs/module-map.md`.
+read `factory/docs/architecture.md` and the relevant module entry in
+`factory/docs/module-map.md`.

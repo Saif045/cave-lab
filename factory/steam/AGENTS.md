@@ -1,6 +1,6 @@
 # Steam Session and Transport Scope
 
-Read this guide and `docs/steam-integration.md` for `SteamSession`,
+Read this guide and `factory/docs/steam-integration.md` for `SteamSession`,
 `GodotSteamAdapter`, lobby state, `SteamMultiplayerPeer`, or native-peer work.
 
 - `SteamPlatform` owns the process-lifetime GodotSteam adapter.

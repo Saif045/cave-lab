@@ -51,8 +51,8 @@ Presentation is deterministic/local where possible. Owner-distinguishing
 colors derive from owner metadata, are consistent on all peers, and are never
 replicated or rolled back.
 
-Read `docs/architecture.md` for a cross-module ownership change and
-`docs/current-state.md` before claiming a gameplay slice acceptance-proven.
+Read `factory/docs/architecture.md` for a cross-module ownership change and
+`factory/docs/current-state.md` before claiming a gameplay slice acceptance-proven.
 
 Starter-player vital tags are canonical server GAS state, projected through ordinary
 replication; clients must not derive Downed/Dead from health. Gate gameplay

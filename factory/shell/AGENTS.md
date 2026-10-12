@@ -7,8 +7,8 @@ Read cross-boundary material only when the task actually crosses that boundary.
 
 - Spawning internals/identity: [networking guide](../networking/AGENTS.md).
 - Steam lobby/session ownership: [Steam guide](../steam/AGENTS.md).
-- Starter content only: read StarterRoundContent/StarterPlayerSpawnDataProvider;
-  route to starter docs after Task D, without pre-emptive physical moves.
+- Starter content only: read [starter guide](../starter/AGENTS.md), then the
+  affected starter shell sources.
 - Runtime execution: repository testing/operator protocols; investigation only
   after a terminal attempt and explicit authorization.
 

@@ -1,0 +1,455 @@
+# Consuming GameFactory in a real game
+
+GameFactory v0.1 is a versioned reusable Godot project foundation with a canonical
+upstream Git repository and a defined downstream Git consumption model.
+[ADR 0007](decisions/0007-upstream-downstream-distribution.md) establishes this
+contract. The [module map](module-map.md) describes implemented responsibilities;
+[current state](current-state.md) records accepted behavior and known limits.
+
+## The upstream relationship
+
+Each real game is a separate repository retaining GameFactory Git ancestry.
+`origin` means this product; `gamefactory` means the reusable upstream foundation:
+
+```text
+origin       -> the actual game's repository
+gamefactory  -> https://github.com/Saif045/godot-multiplayer-game-factory.git
+```
+
+Keep the `gamefactory` remote unless intentionally abandoning upstream updates.
+Consume reviewed immutable tags, not ongoing `gamefactory/master` development.
+Manual copies/ZIPs and cherry-picked official releases are not normal updates.
+Shared ancestry lets Git recognize already integrated upstream changes and find
+a meaningful merge base for later releases.
+
+## Ownership zones
+
+The canonical placement contract is [ownership](ownership.md); v0.2 paths and
+namespace updates are listed in [migration notes](v0.2-ownership-migration.md).
+
+| Zone | Paths | Downstream rule |
+| --- | --- | --- |
+| GameFactory-owned | `factory/**`, including `factory/starter/**` and development material | Return reusable fixes upstream; consume official releases rather than keep permanent forks. |
+| Game-owned | `game/**` | Own gameplay semantics, content, assets, tests and product documentation. |
+| Vendor | `addons/**`, `third_party/**` | Preserve dependency provenance and upstream-managed patches; reconcile dependency requirements deliberately. |
+| Shared integration | `project.godot`, `*.csproj`, `*.sln`, export configuration and selected root configuration | Manually combine game, factory and vendor requirements. |
+
+Starter is a working default/reference composition, not a required base for games.
+The reusable mechanisms can be composed directly with game-owned actors, targets,
+permissions, round content and spawn-data providers.
+
+Use `game/` as the primary convention, with only the directories the game needs:
+
+```text
+game/
+    gameplay/
+    levels/
+    characters/
+    items/
+    ui/
+    progression/
+    content/
+    resources/
+    factory/tests/
+```
+
+Game assets may follow existing project asset conventions or a game-owned asset
+root. Ownership matters more than forcing this exact internal organization.
+Record product-specific paths clearly so later agents can distinguish them from
+upstream infrastructure. Keep framework guide/reference material identifiable;
+downstream README and agent instructions may add product-specific guidance.
+
+Compose game-specific abilities, items, run rules, progression and levels from
+`game/` using public factory boundaries and normal Godot nodes. Do not place a
+mechanic in `factory/` because it might someday be reusable. A missing extension
+seam can justify an upstream improvement when its reusable contract is clear.
+Otherwise keep game-specific behavior in the game.
+
+## Online gameplay scene routing
+
+Set `maaacks_game_template/game_scene_path` to the saved game-owned gameplay
+scene. This existing Maaack setting is the single normal gameplay entry target
+for Host, direct Join, Steam invite Join, and command-line `+connect_lobby`
+routing. GameFactory uses Maaack's runtime path helper and `SceneLoader`; the
+factory menu resolves through `GameShell.ResolveOnlineGameplayScenePath()` too,
+rather than using its inherited per-menu `game_scene_path` override. An absent, empty, or unavailable configured scene uses the exported
+`GameShell.FallbackGameplayScenePath`. The starter autoload configures this to
+`res://factory/starter/shell/online_gameplay.tscn`; custom compositions select
+their own fallback. Missing both valid targets is a configuration error.
+
+The downstream `Saif045/mech-survival` reproduction exposed that Host honored
+the configured scene while Join and Invite loaded the factory scene directly.
+All routes now share resolution while retaining Host/Join launch intents,
+invite logging and active-session rejection. Command-line connect still uses
+`AppBootstrap` -> `GameShell.JoinLobby()`. A game-owned scene must retain the
+normal shell composition/session ownership and consume the pending intent once.
+
+After building, run `factory/sandbox/shell/run_online_gameplay_routing_probe.ps1` for
+local acceptance using the real Maaack loader and a session-free scene fixture.
+It checks default/fallback resolution, all four custom routes, one-shot intents,
+and pending-invite rejection. It preserves evidence under
+`factory/artifacts/online_gameplay_routing/<Label>/`, restores runtime settings, and
+removes its isolated profile. Steam transport and visual gameplay are outside
+this routing check.
+
+## Custom gameplay player scenes
+
+### Composing player-independent interaction
+
+Interaction owns target request routing and authoritative network validation;
+actor-state permission belongs to the starter/game. A custom interaction actor
+uses a `Node3D` host with the normal direct child named `NetworkObject`, a
+`PlayerInteractor`, and an explicit node implementing `IInteractionPermission`:
+
+```csharp
+bool CanRequestInteraction(NetworkObject actor, PeerId requestingPeerId);
+```
+
+Set the interactor's `PermissionPath` relative to the interactor (for example,
+`../InteractionPermission`). A missing/empty path or wrong-type node reports a
+configuration error and denies interaction; it never defaults to allowing it.
+An actor without vitality composes a policy that explicitly returns true.
+Neither `NetworkPlayer3D` inheritance nor `NetworkGasComponent` is required.
+Policies check actor state only. Use canonical state on the server and a
+side-effect-free local projection for input suppression; target-specific rules
+remain in `IInteractable.CanInteract`.
+
+Set `EnableDefaultInput=false` for game-owned input/selection and call
+`RequestInteraction(NetworkObjectId target)` on the local owner's interactor.
+This sends the same reliable request and preserves server ownership, identity,
+self-target, range, permission, and target validation. It accepts no client
+transform/state. With default input enabled, `interact` selects the nearest
+eligible local target as before. Target resolution prefers the host's
+`IInteractable`, then its first direct implementing child; candidate hosts use
+the `interactable` group and direct `NetworkObject` child. Range is 3D distance
+between actor and target origins, not an aiming/line-of-sight model.
+
+`CanInteract` must be a side-effect-free availability hint locally; the server
+invocation decides acceptance. `Interact` is dispatched after server validation.
+`InteractionContext.ServerPlayerPosition` keeps its public name for compatibility
+but contains local position during candidate selection.
+
+Migration: existing scenes composing `PlayerInteractor` must add/select an
+explicit policy. The upstream default player is already wired to
+`StarterPlayerInteractionPermission` and retains GAS-backed Downed/Dead gates.
+Revive remains starter/reference gameplay. Reusable interactor diagnostics no
+longer special-case revive; correlate generic interaction outcomes with GAS
+revive outcome events. No InputMap action rename is required. Task A left carry,
+inventory, GAS and round content unchanged; Task B adds the carry seam below.
+
+Run `factory/sandbox/interaction/run_interaction_boundary_probe.ps1 -Label <unique>`
+after building. It imports fixtures, runs the default GAS/player compatibility
+probe, then runs two local ENet processes with a plain `Node3D` actor and no
+factory GAS. It checks host/client owners, replicated switch results, spoofed
+sender, invalid/missing target, authoritative range, server-only policy denial,
+self-target rejection, and invalid policy configuration. The bounded runner
+preserves evidence in `factory/artifacts/interaction_boundary/<Label>/`, restores the
+caller environment, and verifies removal of test processes/disposable profiles.
+No Steam session or VM acceptance is required for this boundary.
+
+Task A acceptance passed October 12, 2026, on baseline `adf1a854` plus this
+task's source changes: `factory/artifacts/interaction_boundary/task_a_20261012_06/`.
+`result.json` records PASS, zero live test processes and removed disposable
+profiles; host/client stdout records each assertion and ordinary switch
+replication. The tested Debug assembly SHA256 is
+`D82DFE6E43B43595D963D23C0343592FA1AB57361395C3D541B0111491C527B7`.
+The default probe passed input/nearest switch, interaction pickup, canonical
+Downed/Dead rejection, bidirectional revive and existing vital/equipment cleanup.
+Build passed with zero warnings/errors; all 73 tests passed (final TRX under
+`factory/artifacts/interaction_boundary/task_a_unit/`). No new engine-independent
+policy algorithm was introduced; Godot policy configuration is exercised by
+the runtime fixture.
+
+Earlier evidence is preserved separately: attempt 01 was blocked at sandbox
+CIM preflight; attempts 02/03 passed gameplay assertions but failed fixture
+exit checks; diagnostic 04 stopped on verbose editor socket output and 05
+identified orphan invalid-policy test nodes. The fixture now explicitly frees
+those nodes, pairs signal subscriptions, uses a frame deadline and tolerates
+process exit racing with Stop-Process while independently verifying cleanup.
+These corrections did not change the production interaction behavior.
+
+### Spawn and lifecycle contract
+
+For custom-player and custom-item carry composition, use the canonical
+[carry guide](../gameplay/carry/README.md). It documents explicit
+policy/anchor wiring, capability discovery, server request/lifecycle APIs,
+replication/presentation, starter adapters and migration. Game-owned scenes
+remain under `game/`; no factory path moves or universal inventory API are
+required. Carry's own scoped router defines the task-specific reading set.
+
+`OnlineGameplayWorld.PlayerScene` is a downstream composition seam. Set it to a
+saved game-owned `PackedScene`; its host does not need to inherit
+`NetworkPlayer3D` (or even `Node3D`). It must satisfy the normal `NetworkWorld`
+spawn contract: a direct child named `NetworkObject` with the `NetworkObject`
+script, and a valid scene resource UID. An explicitly composed
+`IPlayerSpawnDataProvider` supplies the initialization dictionary; the host
+implements `INetworkSpawnInitializable` to consume that schema before tree
+entry. Only the explicit starter provider requires `spawn_position`.
+Game-specific movement and presentation stay in the game-owned scene.
+
+Select the game's `IRoundContent` through `RoundContentPath` and its spawn
+provider through required `SpawnDataProviderPath`, relative to the world node.
+Empty content path means players-only with no starter fallback. Invalid
+configured paths fail clearly. The migrated default scene explicitly selects
+starter content/spawn data; custom scenes need not copy its lifecycle. Canonical
+callbacks, reset/Stop semantics, examples and migration are documented in
+[shell/README.md](../shell/README.md).
+
+The server binds runtime object identity and represented `OwnerPeerId`;
+represented ownership does not transfer the host's Godot authority.
+`PlayerLifecycle` tracks `PlayerId`, `PeerId`, and `NetworkObjectId` independently
+of the host class. Round reset waits for registered player objects to leave the
+world before removing remaining round objects, retaining the session and world
+ID allocator. The default `network_player_3d.tscn` sample remains unchanged.
+
+The focused `factory/sandbox/shell/custom_player_lifecycle_probe.tscn` checks this
+contract in Godot using a minimal `Node` host and synthetic registry peers;
+`round_reuse_probe.tscn` covers the default sample's populated round reset. Run
+both with `factory/sandbox/shell/run_custom_player_lifecycle_probe.ps1` after building;
+the runner imports resources, asserts three rounds for each scene, and preserves
+logs and cleanup results under `factory/artifacts/custom_player_lifecycle/<Label>/`.
+These local probes do not establish Steam transport or visual gameplay acceptance.
+
+## Create a new game
+
+These are instructions for use after `gamefactory-v0.1` has been published;
+this documentation does not assert that the tag already exists. Create an empty
+game remote repository without generated starter commits, then run:
+
+```bash
+git clone https://github.com/Saif045/godot-multiplayer-game-factory.git my-game
+cd my-game
+git switch -c main gamefactory-v0.1
+git remote rename origin gamefactory
+git remote add origin <NEW-GAME-REPOSITORY-URL>
+git push -u origin main
+```
+
+Replace the URL placeholder with the game's repository URL. Verify remotes with
+`git remote -v`. The game begins from the tagged release, rather than whatever
+upstream `master` currently contains. The clone preserves upstream history;
+renaming the remote and pushing a new branch does not sever it. Keep the initial
+foundation intact while introducing product content under `game/` and reviewing
+main-scene, input, naming and export changes as shared integration work.
+
+## Record the consumer baseline
+
+Each game creates its own `.gamefactory-version`:
+
+```text
+version=gamefactory-v0.1
+commit=<exact GameFactory release commit SHA>
+```
+
+Obtain the full release commit with `git rev-parse gamefactory-v0.1^{commit}`
+(quote the revision in shells that interpret braces). This means the peeled
+commit, not the annotated tag object's SHA. Commit the marker in the game after
+the baseline is integrated and validated. It is informational provenance for
+humans, agents, scripts and CI, not a package manager. Git ancestry is authoritative.
+Do not use the game HEAD SHA as the upstream release SHA. Update the marker only
+after each release integration passes validation. No speculative v0.1 SHA or
+consumer marker is added to the upstream repository before its final tag exists.
+
+## Update one game
+
+Suppose the game uses `gamefactory-v0.1` and an official `gamefactory-v0.1.1`
+is published. Begin on the game's current main branch with a clean working tree;
+commit or separately preserve unrelated work before starting:
+
+```bash
+git switch main
+git status
+git fetch gamefactory --tags
+git switch -c chore/gamefactory-v0.1.1
+git merge --no-ff gamefactory-v0.1.1
+```
+
+Read the chosen version's release record and migration requirements (the
+[release guide](releasing-gamefactory.md) defines that record) and verify its
+exact commit. A tag-fetch conflict is a
+provenance issue to investigate, not permission to force-replace a tag.
+
+1. Inspect conflicts and classify them using the ownership rules below.
+2. Reconcile shared integration files; inspect all framework-owned path changes.
+3. Build and run the game's appropriate automated tests.
+4. Run focused runtime acceptance when affected behavior requires it. Follow
+   [testing protocol](testing-protocol.md) for Godot/Steam/process tests and the
+   [operator protocol](runtime-test-operator.md) for host/VM work. Record actual
+   results, evidence and cleanup; startup or a unit pass cannot replace gameplay evidence.
+5. After successful validation, update `.gamefactory-version` with the tag and
+   exact release commit, and commit that marker and any remaining integration changes.
+6. Integrate the update branch into the game's main branch preserving ancestry.
+
+If the merge stops for conflicts, resolve and stage the intended files, then
+complete the merge commit with `git commit`. Keep the update branch out of main
+until required acceptance passes. An unconflicted `git merge` may already have
+created the merge commit; the validated marker can be a subsequent focused commit.
+If abandoning an in-progress merge, `git merge --abort` returns to the pre-merge
+state when started clean; preserve any needed diagnostic work first.
+
+**Do not squash GameFactory release-update merges. Do not replace them with
+cherry-picks of individual official GameFactory commits.** Preserve the release
+ancestry when merging the update PR too; a squash or rebase integration that
+discards its merge relationship defeats the purpose. Product feature PRs can
+follow the game's usual policy.
+
+```text
+GameFactory tag ------------------+
+                                  |
+game-specific history ------------+-- merge commit
+```
+
+Git can now tell that the game contains the upstream release. Verify with
+`git merge-base --is-ancestor gamefactory-v0.1.1 HEAD` (exit 0 means contained).
+Do not routinely merge `gamefactory/master`: it is development state, while a
+release tag is a reviewed boundary. Debugging against unreleased upstream work
+must be an explicit temporary exception followed by official release integration.
+
+## A Game 5 reproduction can reveal an upstream defect
+
+This is the central repair rule: the repository that reproduces a problem and
+the repository that owns the fix need not be the same repository.
+
+Suppose Game 5's special climbing mechanic triggers a player-lifecycle bug that
+the standalone factory sandbox cannot reproduce:
+
+```text
+Game 5 mechanic -> exposes lifecycle defect -> GameFactory owns lifecycle code
+reproduction owner = Game 5
+fix owner          = GameFactory
+```
+
+That is legitimate integration evidence. Record the exact Game 5 commit,
+consumed release, steps, assertions, failure evidence, and environment before
+changing variables. Create a temporary diagnosis branch:
+
+```bash
+git switch -c bug/gamefactory-lifecycle-ordering
+```
+
+On this branch, edits to `game/`, `factory/` and shared integration files are
+allowed when needed to diagnose the failure. Temporary framework edits must
+not silently become permanent Game 5 ownership. Preserve the original failed
+run and follow the repository's investigation discipline after terminal tests.
+
+### Isolate ownership and transfer the candidate
+
+If it is only a game bug, fix Game 5 without changing GameFactory. If it is a
+framework bug, move the reusable fix upstream. If both are wrong, create separate
+framework and game fixes rather than combining their ownership permanently.
+
+When possible, isolate the experimental framework fix in a commit touching only
+GameFactory-owned paths, for example `TEMP: fix lifecycle ordering exposed by
+Game 5 climbing`. It is transfer material, not the official game update. In the
+actual canonical GameFactory checkout, supported transfer options include:
+
+```bash
+git remote add game5 <GAME-5-REPOSITORY-URL>
+git fetch game5 bug/gamefactory-lifecycle-ordering
+git switch -c codex/fix-lifecycle-ordering master
+git cherry-pick <FOCUSED-TEMPORARY-FIX-COMMIT>
+```
+
+Use an existing remote if already configured; inspect the focused commit before
+applying it. Shared ancestry often makes transfer straightforward, but differing
+versions can still require reconciliation. Export/apply a focused patch or
+carefully recreate the minimal upstream change when necessary. Review the final
+diff in GameFactory, excluding Game 5's mechanic and unrelated configuration.
+This candidate-transfer cherry-pick is distinct from consuming an official
+release, which must use an ancestry-preserving merge.
+
+### Validate and release upstream
+
+A candidate working in Game 5 is necessary evidence, but insufficient alone.
+Run narrow upstream build/tests/probes, add a generic regression for the reusable
+invariant when practical, and run required runtime acceptance before committing
+the implementation. Do not import Game 5's entire climbing mechanic or distort
+framework architecture just to make the full reproducer standalone.
+
+The evidence can state: Game 5 at an exact commit reproduces the defect; the
+candidate removes it there; upstream regression/unit/headless validation passes;
+and a focused generic invariant is covered where practical. State clearly when
+Game 5 supplies the only realistic full integration reproduction. After upstream
+review and acceptance, publish the fix as an immutable release such as
+`gamefactory-v0.1.1`, following the [release process](releasing-gamefactory.md).
+
+### Return through the official release
+
+Do not merge the temporary bug branch into Game 5 main merely because it works.
+Preserve any separate game fix, return to the clean product line, and run:
+
+```bash
+git switch main
+git fetch gamefactory --tags
+git switch -c chore/gamefactory-v0.1.1
+git merge --no-ff gamefactory-v0.1.1
+```
+
+Resolve integration conflicts and rerun the **original Game 5 reproduction**
+against the official release. Reapply only the separately owned game fix if
+needed. Update the marker after validation and integrate the release branch
+without squashing. Only then retire/delete the temporary diagnosis branch once
+its useful evidence and game changes are preserved. The official release now
+owns the fix; the experiment is no longer authoritative.
+
+Keeping six permanent local copies of framework repairs produces six custom
+forks. Moving the fix upstream once lets the same reviewed release reach all games.
+
+## Update six games
+
+Each game receives the same release independently:
+
+```text
+Game 1 -> chore/gamefactory-v0.1.1
+Game 2 -> chore/gamefactory-v0.1.1
+Game 3 -> chore/gamefactory-v0.1.1
+Game 4 -> chore/gamefactory-v0.1.1
+Game 5 -> chore/gamefactory-v0.1.1
+Game 6 -> chore/gamefactory-v0.1.1
+```
+
+Apply the one-game workflow in each repository, with its own conflict review,
+baseline marker, tests and runtime acceptance. Passing in Game 5 does not accept
+the update in the other five games. A useful propagation report is:
+
+```text
+Game1 PASS
+Game2 PASS
+Game3 BLOCKED shared configuration conflict
+Game4 PASS
+Game5 PASS
+Game6 PASS
+```
+
+These are desired report examples, not actual validation results. Future tooling
+may fetch tags, check baselines, create branches, merge requested tags, run each
+game's validation, open PRs and report conflicts. It must not hide conflicts or
+choose resolutions automatically. No such bulk automation is implemented here;
+the first real game should validate the manual workflow first.
+
+## Interpret conflicts by ownership
+
+| Conflict | Meaning and response |
+| --- | --- |
+| `factory/networking/players/PlayerLifecycle.cs` or another framework path | Suspicious downstream modification. Determine whether it should have been upstreamed, is an obsolete experiment to discard, or is a reusable missing change to upstream first. Do not blindly keep the game's version. |
+| `project.godot` or another shared surface | Often legitimate. Combine required factory/dependency/autoload settings with game inputs, rendering, project and export requirements. Do not mechanically choose `ours` or `theirs`. |
+| `game/climbing/ClimbingController.cs` or another product path | A normal upstream release should not touch it. Investigate why the release contains game-specific paths before resolving. |
+
+## Version boundaries and future packaging
+
+The intended first tag is `gamefactory-v0.1`; narrow patch-like releases may be
+`gamefactory-v0.1.1`/`gamefactory-v0.1.2`, and larger capability releases may be
+`gamefactory-v0.2`/`gamefactory-v0.3`. No formal semantic-versioning compatibility
+guarantee exists for v0.x. Fixes favor compatibility, larger changes need migration
+notes, affected surfaces must be described, and games upgrade deliberately.
+Published tags never move; a wrong release is corrected by another tag.
+
+v0.1 is not a NuGet library, single Godot addon, Git submodule, package-manager
+dependency, generic engine-independent multiplayer SDK, production Steam shipping
+guarantee, dedicated-server-complete framework, or promise of conflict-free v0.x
+upgrades. Its project-wide composition is why packaging is deferred.
+
+Real games may later justify `addons/gamefactory/` and a separation into
+GameFactory Runtime, Starter defaults, and tooling. A submodule or other package
+could then fit. This is a possibility requiring consumer evidence, not a promise
+of the final architecture or work to do before the first game.

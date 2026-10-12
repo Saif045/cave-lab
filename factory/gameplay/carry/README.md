@@ -185,14 +185,14 @@ events provide that correlation; the starter supplies the Downed reason string.
 
 ## Validation and common mistakes
 
-After building, run `sandbox/carry/run_carry_boundary_probe.ps1 -Label <unique>`.
+After building, run `factory/sandbox/carry/run_carry_boundary_probe.ps1 -Label <unique>`.
 It imports saved scenes; checks default GAS/vital/inventory/equipment behavior;
 then runs isolated custom and default host/client ENet pairs. It asserts pickup,
 drop, holder replication, local/remote follow, default movement/jump while held,
 one-item capacity, wrong sender/non-holder, server-only pickup/drop denial,
 stale removed item and holder/world cleanup. Required configuration failures are
 also checked. The runner preserves assembly hash, source inputs, logs and result
-under `artifacts/carry_boundary/<Label>/`, restores environment and verifies
+under `factory/artifacts/carry_boundary/<Label>/`, restores environment and verifies
 process/profile cleanup. Timeouts are bounded; no Steam session/VM is needed.
 
 Common mistakes: using PeerId as holder; moving authority to the holder;
@@ -208,7 +208,7 @@ framework, arbitrary rigid-body pickup physics or physical directory relocation.
 ## Accepted evidence
 
 Task B passed on October 12, 2026, baseline `d7498d3` plus the task changes.
-Final local suite: `artifacts/carry_boundary/task_b_20261012_02/`; its result
+Final local suite: `factory/artifacts/carry_boundary/task_b_20261012_02/`; its result
 records PASS, zero live test processes, removed profiles and no VM use. The
 Debug assembly SHA256 in build.json is
 `8E6615C02009ABDD0480B43ECAD5D7880870DA6E4CC3F22F7AD7B40F8DB767F1`.
@@ -216,7 +216,7 @@ Default GAS/vital/inventory tests and both custom/starter ENet pairs passed,
 including replicated moving-anchor follow, starter movement/jump while held,
 permission/sender/holder rejection, removed-item recovery and world cleanup.
 Build passed with zero warnings/errors; all 73 existing tests passed (final
-TRX in `artifacts/carry_boundary/task_b_unit/`); diff check passed. New
+TRX in `factory/artifacts/carry_boundary/task_b_unit/`); diff check passed. New
 configuration/capability logic depends on Godot nodes and is covered by runtime
 assertions rather than mirror unit tests. No new engine-independent algorithm
 was introduced.

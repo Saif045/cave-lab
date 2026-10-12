@@ -1,7 +1,7 @@
 # Interaction scope
 
 Read [../AGENTS.md](../AGENTS.md) for the Task A interaction invariants and
-the interaction section of [consumer guidance](../../../docs/consuming-gamefactory.md#composing-player-independent-interaction)
+the interaction section of [consumer guidance](../../docs/consuming-gamefactory.md#composing-player-independent-interaction)
 for composition/migration. For pickup target/holder changes, read only
 [carry/README.md](../carry/README.md) in addition to those interaction rules.
 

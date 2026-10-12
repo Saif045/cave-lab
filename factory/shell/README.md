@@ -2,7 +2,7 @@
 
 This is the canonical detailed shell/world guide. GameFactory owns online
 lifecycle and network mechanisms; games own content and player initialization.
-The starter examples stay in their existing physical paths until Task D.
+The working reference composition lives under `factory/starter/`.
 No copied world lifecycle, level framework or second content registry is needed.
 
 ## Ownership
@@ -146,7 +146,8 @@ spawns the switch at `(0, 0.625, -1.5)` and cube at `(0, 0.35, 1.5)`.
 StarterPlayerSpawnDataProvider returns `spawn_position`: player 1 `(-2,2,0)`;
 other players `(2,2,0)`. The default player and its interaction/carry/inventory/
 GAS composition remain unchanged. These implementations are starter/reference
-content, not requirements of reusable lifecycle. Task D may move them later.
+content, not requirements of reusable lifecycle. See the
+[starter guide](../starter/README.md) and [ownership migration](../docs/v0.2-ownership-migration.md).
 
 ## Minimal game-owned composition
 
@@ -207,7 +208,7 @@ missing paths and assuming fallback; duplicating static/authored network objects
 resetting content before players release their state; freeing client replicas;
 forgetting subscriptions; using Stop as a substitute for ResetRoundAsync.
 
-Run `sandbox/shell/round_composition/run_round_composition_probe.ps1 -Label <unique>`
+Run `factory/sandbox/shell/round_composition/run_round_composition_probe.ps1 -Label <unique>`
 after building. The bounded disposable-profile suite imports fixtures, checks
 starter GAS/vital/inventory smoke and existing three-round/default custom-player
 lifecycle probes, then runs custom and empty-content host/client pairs. It checks
@@ -216,7 +217,7 @@ identities/authority, no starter leaks, player-first teardown, reset callbacks,
 fresh identities in the second round, retained peer and full cleanup. It also
 checks explicit configuration failures and terminal local content cleanup.
 Logs, tested input/assembly hashes and terminal result are preserved under
-`artifacts/round_composition/<Label>/`; cleanup verifies no owned processes or
+`factory/artifacts/round_composition/<Label>/`; cleanup verifies no owned processes or
 disposable profiles remain. This does not claim new Steam/VM A/B evidence.
 
 Non-goals: level/game-mode/objective/encounter frameworks, content database,
@@ -226,11 +227,11 @@ movement/rollback changes, gameplay subsystem redesign or physical relocation.
 ## Accepted Task C evidence
 
 October 12, 2026: baseline `c16442f` plus Task C passed
-`artifacts/round_composition/task_c_20261012_01/`. The result records PASS,
+`factory/artifacts/round_composition/task_c_20261012_01/`. The result records PASS,
 zero owned processes, removed disposable profiles and no VM use. Debug assembly
 SHA256: `033CC068E06FA1504DEA34DB42BF4BF85DCA4AB008AA0195DD9BD39B641F5393`.
 Build passed with zero warnings/errors; all 73 tests passed (TRX under
-`artifacts/round_composition/task_c_unit/`); diff checks passed.
+`factory/artifacts/round_composition/task_c_unit/`); diff checks passed.
 
 Default smoke passed interaction/pickup, GAS/vitals, all inventory/equipment
 transitions and cleanup. Default round reuse passed three fresh populated rounds
@@ -248,3 +249,16 @@ through reflection, keeping test-only access out of the public lifecycle API.
 No new engine-independent algorithm was introduced; NodePath/capability/data
 composition is checked in Godot rather than duplicated in pure unit tests.
 Existing Steam/VM acceptance remains prior evidence and was not rerun.
+
+## Application gameplay fallback composition
+
+GameShell resolves Maaack's valid `game_scene_path` for every online entry route.
+If that target is absent or invalid, it uses exported `FallbackGameplayScenePath`.
+The starter autoload scene sets that property to its moved default gameplay scene.
+A game composing GameShell must select a valid configured target or fallback;
+missing both is a clear configuration error. The former public
+`OnlineGameplayScenePath` constant was removed to keep reusable shell code free
+of starter resource dependencies. Existing main-menu, join, pause and options
+integration remains here; default gameplay and GameShell scene composition live
+in `factory/starter/shell/`. See the ownership migration for resource/namespace
+updates. Round-content and spawn-data contracts are unchanged by this move.
