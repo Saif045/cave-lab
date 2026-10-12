@@ -4,6 +4,13 @@ Read this guide for gameplay code layered on the networking foundation. Keep a
 feature's rules and state ownership explicit; do not introduce a generic
 ability, command, event-bus, or progression framework for one slice.
 
+Each topic has one canonical documentation home beside its code; routing
+guides specify the minimum reading set. Repository documentation may be
+extensive, but agent context stays task-scoped. Read unrelated topics only
+when the task crosses their boundary. For carry, continue to
+`carry/AGENTS.md` and `carry/README.md`; do not duplicate that mechanism guide
+in a central docs tree.
+
 Use this default choice:
 
 | Need | Mechanism |
@@ -47,7 +54,7 @@ replicated or rolled back.
 Read `docs/architecture.md` for a cross-module ownership change and
 `docs/current-state.md` before claiming a gameplay slice acceptance-proven.
 
-Player vital tags are canonical server GAS state, projected through ordinary
+Starter-player vital tags are canonical server GAS state, projected through ordinary
 replication; clients must not derive Downed/Dead from health. Gate gameplay
 requests against canonical incapacitation as well as suppressing local input.
 Netfox reads that gate but records only physical state and reset consumption,

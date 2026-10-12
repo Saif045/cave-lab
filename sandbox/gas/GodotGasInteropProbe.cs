@@ -255,6 +255,14 @@ public partial class GodotGasInteropProbe : Node
         Dispatch(inventory, "HandleStore", new PeerId(2));
         Dispatch(inventory, "HandleEquip", new PeerId(2));
         Require(inventory.HasEquippedItem && client.GasMoveSpeed == 12, "Composed equipment grant failed.");
+        Dispatch(inventory, "HandleUnequip", new PeerId(2));
+        Require(inventory.HasStoredItem && !inventory.HasEquippedItem && client.GasMoveSpeed == 6,
+            "Carry compatibility unequip failed.");
+        Dispatch(inventory, "HandleRetrieve", new PeerId(2));
+        Require(!inventory.HasStoredItem && carrier.HasCarriedItem && item.HolderNetworkObjectId == identity.Value,
+            "Carry compatibility retrieve failed.");
+        Dispatch(inventory, "HandleStore", new PeerId(2));
+        Dispatch(inventory, "HandleEquip", new PeerId(2));
         Dispatch(clientGas, "HandleActivation", new PeerId(2));
         Dispatch(clientGas, "HandleActivation", new PeerId(2));
         foreach (string method in new[] { "HandleActivation", "HandleDash", "HandleFortifyActivation", "HandleSpeedBoost" })
@@ -294,6 +302,7 @@ public partial class GodotGasInteropProbe : Node
         GameLog.Info("gas.interop", "player_composition_probe_passed", fields: new Dictionary<string, string?>
         { ["bidirectional_revive"] = "True", ["self_owner_range_dead_rejections"] = "True",
           ["default_input_switch"] = "True", ["canonical_downed_dead_interaction_gate"] = "True", ["interaction_pickup"] = "True",
+          ["carry_inventory_equipment_transitions"] = "True",
           ["stale_actions_rejected"] = "True", ["auto_drop"] = "True", ["timer_respawn_identity"] = "True",
           ["stored_equipped_cleanup"] = "True" });
     }

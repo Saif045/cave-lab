@@ -190,7 +190,7 @@ public partial class PlayerInventory : Node
         }
 
         SetStoredItemNetworkObjectId(item.GetNetworkObject().Id.Value);
-        _playerHost.GetNode<PlayerCarrier>("PlayerCarrier").ClearStoredItem(item);
+        _playerHost.GetNode<PlayerCarrier>("PlayerCarrier").ForgetHeldItem(item);
         ApplyReplicatedState("authority_change");
         Log("store_accepted", new Dictionary<string, string?>
         {
@@ -218,14 +218,14 @@ public partial class PlayerInventory : Node
             Reject("retrieve_rejected", "stored_item_missing");
             return;
         }
-        if (!_playerHost.GetNode<PlayerCarrier>("PlayerCarrier").CanReceiveRetrievedItem ||
+        if (_playerHost.GetNode<PlayerCarrier>("PlayerCarrier").HasCarriedItem ||
             !item.TryRetrieve(_player))
         {
             Reject("retrieve_rejected", "carrier_not_empty_or_item_not_stored");
             return;
         }
 
-        _playerHost.GetNode<PlayerCarrier>("PlayerCarrier").SetRetrievedItem(item);
+        _playerHost.GetNode<PlayerCarrier>("PlayerCarrier").AdoptHeldItem(item);
         SetStoredItemNetworkObjectId(0);
         ApplyReplicatedState("authority_change");
         Log("retrieve_accepted", new Dictionary<string, string?>

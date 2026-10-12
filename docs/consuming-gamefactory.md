@@ -125,8 +125,8 @@ explicit policy. The upstream default player is already wired to
 `StarterPlayerInteractionPermission` and retains GAS-backed Downed/Dead gates.
 Revive remains starter/reference gameplay. Reusable interactor diagnostics no
 longer special-case revive; correlate generic interaction outcomes with GAS
-revive outcome events. No InputMap action rename is required. Carry, inventory,
-GAS, round content, and their remaining starter dependencies are unchanged.
+revive outcome events. No InputMap action rename is required. Task A left carry,
+inventory, GAS and round content unchanged; Task B adds the carry seam below.
 
 Run `sandbox/interaction/run_interaction_boundary_probe.ps1 -Label <unique>`
 after building. It imports fixtures, runs the default GAS/player compatibility
@@ -160,6 +160,13 @@ process exit racing with Stop-Process while independently verifying cleanup.
 These corrections did not change the production interaction behavior.
 
 ### Spawn and lifecycle contract
+
+For custom-player and custom-item carry composition, use the canonical
+[carry guide](../factory/gameplay/carry/README.md). It documents explicit
+policy/anchor wiring, capability discovery, server request/lifecycle APIs,
+replication/presentation, starter adapters and migration. Game-owned scenes
+remain under `game/`; no factory path moves or universal inventory API are
+required. Carry's own scoped router defines the task-specific reading set.
 
 `OnlineGameplayWorld.PlayerScene` is a downstream composition seam. Set it to a
 saved game-owned `PackedScene`; its host does not need to inherit

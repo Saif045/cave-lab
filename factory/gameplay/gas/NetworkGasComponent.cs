@@ -452,7 +452,7 @@ public partial class NetworkGasComponent : Node
         {
             _vitalRemaining = BleedoutSeconds;
             Log("downed_entered", new Dictionary<string, string?>());
-            _playerHost.GetNode<PlayerCarrier>("PlayerCarrier").DropOnDowned();
+            _playerHost.GetNode<PlayerCarrier>("PlayerCarrier").ReleaseHeldItem("carried_item_dropped_on_downed");
         }
         if (!snapshot.IsDowned && _observedDowned)
             Log("downed_cleared", new Dictionary<string, string?> { ["reason"] = reason });

@@ -67,12 +67,16 @@ does not branch on its type or emit revive-specific diagnostic events. Generic
 interaction request/rejection diagnostics and the starter's GAS revive outcome
 diagnostics remain available.
 
-`factory/gameplay/carry/` adds one server-owned carryable item without an
-authority transfer. Interaction still supplies only a target
-`NetworkObjectId`; the server records a holder object ID or computes a world
-drop transform. Every peer derives a held visual from the holder's
-presentation `CarryAnchor`, while world transform replication is limited to
-spawn and drop state.
+`factory/gameplay/carry/` provides player/item-independent one-item carry.
+Actor permission and anchor are explicit composition; holder/target capabilities
+resolve on the host/direct children. Pickup composes Task A interaction; drop
+uses a validated reliable request and server-computed transform. Item authority
+stays on server 1 and held presentation remains derived outside rollback.
+`CarryTarget` supplies World/Carried state; the starter cube adapts its separate
+Stored/Equipped rules through the same narrow capability. Lifecycle release is
+neutral; the starter GAS composition owns Downed meaning. The canonical detailed
+contract, scene examples and migration are in
+[carry/README.md](../factory/gameplay/carry/README.md).
 
 `factory/gameplay/inventory/` composes carry with a one-slot inventory and equipment: the permanent item's identity survives World/Carried/Stored/Equipped transitions. The server validates requests and grants/removes source-owned equipment capabilities through the GAS adapter. Death preserves stored/equipped items; player despawn releases them to World and removes their effects.
 

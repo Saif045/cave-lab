@@ -13,7 +13,7 @@ namespace GameFactory.Gameplay.Carry;
 /// Server-owned world item. Replicated holder state selects a local
 /// presentation anchor; only a world/drop transform is replicated.
 /// </summary>
-public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitializable
+public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitializable, ICarryTarget
 {
     public const int WorldState = 0;
     public const int CarriedState = 1;
@@ -30,6 +30,10 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
     public Transform3D WorldTransform { get; set; } = Transform3D.Identity;
 
     private NetworkObject _networkObject = null!;
+    public NetworkObject NetworkObject => _networkObject;
+    public bool IsAvailable => StorageState == WorldState && HolderNetworkObjectId == 0;
+    public bool TryAttach(NetworkObject holder) => TryPickUp(holder);
+    public bool TryRelease(NetworkObject holder, Transform3D transform) => TryDrop(holder, transform);
     private INetworkReplication _replication = null!;
     private CollisionShape3D _collision = null!;
     private bool _pendingHolderResolution;
@@ -75,7 +79,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
         if (StorageState != CarriedState)
             return;
 
-        if (TryResolveCarrier(out PlayerCarrier carrier))
+        if (TryResolveCarrier(out ICarryHolder carrier))
         {
             GlobalTransform = carrier.CarryAnchor.GlobalTransform;
             ObserveFollow(carrier);
@@ -94,7 +98,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
     public bool CanInteract(InteractionContext context)
     {
         return StorageState == WorldState && HolderNetworkObjectId == 0 &&
-               context.Player.Host.GetNodeOrNull<PlayerCarrier>("PlayerCarrier") is { HasCarriedItem: false };
+               CarryCapabilities.Holder(context.Player.Host) is { HasCarriedItem: false };
     }
 
     public void Interact(InteractionContext context)
@@ -102,7 +106,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
         if (!Multiplayer.IsServer())
             throw new InvalidOperationException("Only the server may mutate a CarryableItem.");
 
-        PlayerCarrier? carrier = context.Player.Host.GetNodeOrNull<PlayerCarrier>("PlayerCarrier");
+        ICarryHolder? carrier = CarryCapabilities.Holder(context.Player.Host);
         if (carrier is null)
         {
             Log("rejected", "player_missing_carrier");
@@ -119,7 +123,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
         if (!Multiplayer.IsServer())
             throw new InvalidOperationException("Only the server may assign a CarryableItem holder.");
 
-        if (HolderNetworkObjectId != 0)
+        if (!IsAvailable)
         {
             Log("rejected", "item_already_held");
             return false;
@@ -241,7 +245,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
         Visible = true;
         _collision.SetDeferred(CollisionShape3D.PropertyName.Disabled, true);
         RemoveFromGroup("interactable");
-        if (TryResolveCarrier(out PlayerCarrier carrier))
+        if (TryResolveCarrier(out ICarryHolder carrier))
         {
             GlobalTransform = carrier.CarryAnchor.GlobalTransform;
             _pendingHolderResolution = false;
@@ -253,7 +257,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
         }
     }
 
-    private bool TryResolveCarrier(out PlayerCarrier carrier)
+    private bool TryResolveCarrier(out ICarryHolder carrier)
     {
         carrier = null!;
         if (HolderNetworkObjectId <= 0 ||
@@ -261,7 +265,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
             holder?.Host is not Node holderHost)
             return false;
 
-        PlayerCarrier? resolved = holderHost.GetNodeOrNull<PlayerCarrier>("PlayerCarrier");
+        ICarryHolder? resolved = CarryCapabilities.Holder(holderHost);
         if (resolved is null)
             return false;
 
@@ -269,7 +273,7 @@ public partial class CarryableItem : Node3D, IInteractable, INetworkSpawnInitial
         return true;
     }
 
-    private void ObserveFollow(PlayerCarrier carrier)
+    private void ObserveFollow(ICarryHolder carrier)
     {
         _followSampleElapsed += GetProcessDeltaTime();
         if (_followSampleElapsed < .5)

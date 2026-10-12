@@ -88,6 +88,18 @@ accepted October 7, 2026.
 
 ## Latest runtime evidence
 
+October 12 Task B player/item-independent carry passed local default GAS/vital/
+inventory compatibility and custom/starter two-process ENet acceptance on
+baseline `d7498d3` plus Task B changes. Explicit carry permission/anchor and
+carry-only target capability replace hidden default-player dependencies.
+Both owners picked up/dropped and observed held follow; starter movement/jump,
+capacity, Downed release, inventory/equipment, sender/permission/holder rejection,
+stale item and despawn cleanup passed. Run `task_b_20261012_02` records PASS,
+zero test processes, removed profiles and no runtime errors/leaks. Build passed
+with zero warnings/errors and all 73 tests passed. Canonical contract, migration
+and exact evidence are in [carry README](../factory/gameplay/carry/README.md).
+This is local carry boundary evidence, not new Steam/VM acceptance.
+
 October 12 player-independent interaction boundary acceptance passed local
 default-player and two-process ENet custom-player checks on baseline `adf1a854`
 plus Task A changes. `PlayerInteractor` now requires explicit actor permission;
