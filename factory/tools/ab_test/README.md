@@ -38,6 +38,9 @@ worktree. Feature work and unit validation may use worktrees; integrate it to
 the main checkout before running the host/VM acceptance harness. Re-running
 `install_host_task.ps1` is safe: it reconciles the task action to the runner
 at the current checkout path.
+Host configuration writing creates its own parent directory, so a fresh/moved
+checkout needs no pre-existing host `.runtime` directory. Run
+`factory/tools/ab_test/tests/host_config_checks.ps1` for the focused regression.
 
 ```powershell
 # No-launch VM control preflight. Requires a verified remote PowerShell marker

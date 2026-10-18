@@ -631,6 +631,8 @@ function Write-HostConfig([string[]]$Arguments, [object]$Manifest, [string]$Mani
         show_log_window = $true
         startup_timeout_seconds = $HostTimeoutSeconds
     }
+    $configDirectory = Split-Path -Parent $hostConfigPath
+    New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
     $temporaryConfigPath = "$hostConfigPath.tmp"
     $hostConfig | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $temporaryConfigPath -Encoding utf8
     Move-Item -LiteralPath $temporaryConfigPath -Destination $hostConfigPath -Force
