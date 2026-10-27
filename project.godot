@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="GameFactory"
+config/name="Cave Lab"
 run/main_scene="res://factory/shell/app_bootstrap.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
@@ -54,9 +54,13 @@ project/assembly_name="GameFactory"
 
 enabled=PackedStringArray("res://addons/plugin_updater/plugin.cfg", "res://addons/maaacks_game_template/plugin.cfg", "res://addons/netfox.internals/plugin.cfg", "res://addons/netfox/plugin.cfg", "res://addons/GodotGAS/plugin.cfg")
 
-[steam]
+[godot_gas]
 
-initialization/processes/initialize_on_startup=false
+resources/attributes/draft_configuration_file="res://factory/starter/gameplay/gas/resources/attributes_draft.cfg"
+resources/attributes/output_directory="res://factory/starter/gameplay/gas/resources/attributes/"
+resources/cues/registry_file="res://factory/starter/gameplay/gas/resources/cue_registry.tres"
+resources/tags/registry_file="res://factory/starter/gameplay/gas/resources/tag_registry.tres"
+resources/tags/generated_script="res://factory/starter/gameplay/gas/resources/gameplay_tags.gd"
 
 [input]
 
@@ -200,11 +204,3 @@ rollback/full_state_interval=24
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-
-[godot_gas]
-
-resources/attributes/draft_configuration_file="res://factory/starter/gameplay/gas/resources/attributes_draft.cfg"
-resources/attributes/output_directory="res://factory/starter/gameplay/gas/resources/attributes/"
-resources/cues/registry_file="res://factory/starter/gameplay/gas/resources/cue_registry.tres"
-resources/tags/registry_file="res://factory/starter/gameplay/gas/resources/tag_registry.tres"
-resources/tags/generated_script="res://factory/starter/gameplay/gas/resources/gameplay_tags.gd"
